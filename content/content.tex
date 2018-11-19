@@ -1,0 +1,111 @@
+\chapter{Introduction}
+\label{Introduction}
+
+\section{Purpose}
+This document is a specification of the Remote Interoperability Protocol (RIP), which was conceived at UNED for the remote operation of online laboratories (OLs).
+
+\section{Document Conventions}
+TODO
+
+\section{Intended Audience and Reading Suggestions}
+Audiences that may be interested in this document are educators, researchers and industry stakeholders that want or need to remotely communicate either with hardware devices or mathematical models from a web application. 
+
+More specifically, this document aims at anyone who is interested in one or more of the following points:
+
+\begin{enumerate}
+    \item Implementing a RIP server and/or a RIP client to use RIP as the communication protocol for operating OLs.
+    \item Using or modifying an existing RIP server and/or RIP client implementation.
+    \item Making modifications on the RIP protocol itself.
+\end{enumerate}
+
+In any of the above cases, it is advised to read the document in order.
+
+\section{Product Scope}
+The objective of RIP is to offer a simple, yet powerful, communication solution usable from web clients. As such, RIP only uses pure HTTP standard protocols, supported by all major web browsers.
+
+\section{References}
+TODO
+
+
+\chapter{Overall Description}
+\label{Overall Description}
+
+\section{Protocol Perspective}
+The protocol is supposed to be an open source, under the GNU general Public License. It is a communication protocol to be used in the client-server model, especially designed for OLs in which the client runs within a web browser. RIP provides a simple mechanism for users and client machines/programs to acquire information about the lab experiences defined in the server and about each experience inputs and outputs. The protocol also defines mechanisms for reading and writing the values of these inputs and outputs, respectively.
+
+The following are the main features of RIP:
+
+\begin{enumerate}
+\item Defining remote experiences on the server
+\item Obtaining meta-data related to each defined remote experience
+\item Obtaining a list of readable and writable variables for each remote experience
+\item Obtaining a list of methods to read and write variables in each remote experience
+\item Subscribing a client to server events to receive data either periodically or based on any other triggering condition defined in the remote experience
+\end{enumerate}
+
+\section{Protocol Functions}
+The functions defined and used in the protocol are divided in two types: internal and external.
+
+TODO
+
+\section{User Classes and Characteristics}
+TODO
+
+\section{Operating Environment}
+RIP uses only HTTP methods for the communication. Therefore, it works in any major web browser. However, RIP also relies on the use of SSE, which, up to date, are not supported by Microsoft Internet Explorer nor Microsoft Edge. Nevertheless, there are numerous poly-fill solutions for implementing SSE so that they work on these browsers that do not support them natively.
+
+\section{Design and Implementation Constraints}
+TODO
+
+\section{User Documentation}
+TODO
+
+\section{Assumptions and Dependencies}
+RIP depends solely on the use of HTTP POST and GET methods and on the JSON format for exchanging data.
+
+
+\chapter{External Interface Requirements}
+\label{External Interface Requirements}
+
+\section{User Interfaces}
+TODO
+
+\section{Hardware Interfaces}
+TODO
+
+\section{Software Interfaces}
+TODO
+
+\section{Communications Interfaces}
+TODO
+
+
+\chapter{Protocol Features}
+\label{System Features}
+
+\section{Protocol Feature 1}
+TODO
+
+
+\chapter{Other Requirements}
+\label{Other Requirements}
+
+
+
+\begin{appendices}
+
+\chapter{Glossary}
+OL - Online laboratory
+
+RIP - Remote Interoperability Protocol
+
+RL - Remote laboratory
+
+SSE - Server-sent events
+
+VL - Virtual laboratory
+
+
+\chapter{Analysis Models}
+
+\end{appendices}
