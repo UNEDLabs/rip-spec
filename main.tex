@@ -6,6 +6,7 @@
 %% Packages
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage[english]{babel}
+\usepackage{listings,xcolor}
 \usepackage{amsmath}
 \usepackage{complexity}
 \usepackage[T1]{fontenc}
@@ -97,7 +98,12 @@
 \DeclareGraphicsExtensions{.pdf,.jpg,.png}
 \pagestyle{short}
 
-
+\lstset{
+    string=[s]{"}{"},
+    stringstyle=\color{blue},
+    comment=[l]{:},
+    commentstyle=\color{black},
+}
 
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
