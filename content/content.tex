@@ -136,11 +136,11 @@ The list of existing internal functions a RIP server must implement is:
 The list of existing external functions a RIP server must implement so that a RIP client may use is:
 
 \begin{enumerate}
-    \item \textbf{info}(\textit{expid} = null): Retrieves the meta-data information about the \textit{experience} defined by the input \textit{expid} parameter.  This parameter is optional and if it is not specified, the method then returns meta-data information about all the \textit{experiences} defined.
-    \item \textbf{start}(\textit{expid}): Starts the execution of the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} associated to the input \textit{expid} parameter.
-    \item \textbf{stop}(\textit{expid}): Stops the execution of the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} defined by the input \textit{expid} parameter.
+    \item \textit{result} $=$ \textbf{info}(\textit{expid} = null): Retrieves the meta-data information about the \textit{experience} defined by the input \textit{expid} parameter.  This parameter is optional and if it is not specified, the method then returns meta-data information about all the \textit{experiences} defined.
+    \item \textit{result} $=$ \textbf{start}(\textit{expid}): Starts the execution of the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} associated to the input \textit{expid} parameter.
+    \item \textit{result} $=$ \textbf{stop}(\textit{expid}): Stops the execution of the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} defined by the input \textit{expid} parameter.
     \item \textit{readvariablenames}, \textit{readvariablevalues} $=$ \textbf{get}(\textit{expid}, \textit{variablenames}): Retrieves the current values of the variables (\textit{readvariablevalues}) specified by the \textit{variablenames} input parameter. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the \textit{experience} defined by the \textit{expid} input parameter. When the \textbf{get()} method is called, \textit{readvariablenames} contains only the names of the variables that were successfully read, not all requested ones in \textit{variablenamess}.
-    \item \textbf{set}(\textit{expid}, \textit{variablenames}, \textit{variablevalues}): Writes the received values (\textit{variablevalues}) in the specified variables (\textit{variablenames}) of the appropiate OL \textit{experience}. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the (\textit{expid}) input parameter.
+    \item \textit{result} $=$ \textbf{set}(\textit{expid}, \textit{variablenames}, \textit{variablevalues}): Writes the received values (\textit{variablevalues}) in the specified variables (\textit{variablenames}) of the appropiate OL \textit{experience}. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the (\textit{expid}) input parameter.
 \end{enumerate}
 
 Where:
@@ -149,7 +149,7 @@ Variables \textit{variablenames} and \textit{variablevalues} are arrays of text.
 
 Each method returns an error indicator when the operation is not completed successfully.
 
-At the moment, only numbers, text and booleans are supported in the \textbf{set}() and \textbf{get}() methods.
+At the moment, only numbers, text and booleans are supported as valid types for \textit{variablevalues} and \textit{readvariablevalues} in the \textbf{set}() and \textbf{get}() methods, respectively.
 
 \section{Protocol Communication Methods (Low-Level API)}
 Three HTTP communication methods are available in RIP:
@@ -165,9 +165,10 @@ Table \ref{tab:low-high-levels-correspondence} shows the correspondence between 
 \begin{table}[]
     \centering
     \begin{tabular}{|c|c|}\hline
-         &  \\HTTP Method & RIP function \\\hline
+         &  \\HTTP Method (Low-Level API) & RIP function (High-Level API)\\\hline
          &  \\GET & info(), info(expid) \\\hline
-         &  \\POST & set(), get(), start(), stop() \\\hline
+         &  \\POST & set(expid, variablenames, variablevalues),
+            \\     & get(expid, variablenames), start(expid), stop() \\\hline
          &  \\SSE & TODO \\\hline
     \end{tabular}
     \caption{RIP functions - HTTP methods correspondence}
@@ -190,38 +191,64 @@ RIP server implementations may differ a lot depending on the language used to ma
 \section{User Documentation}
 This section provides a deeper insight on the high-level API, which is the only knowledge required by a user to use a RIP client implementation to communicate with an OL running a RIP server.
 
-A RIP client must implement a class with the methods described in Section \ref{sec:External_Functions}. Next, detailed information of the result returned by each method is given.
+A RIP client must implement a class with the methods described in Section \ref{sec:External_Functions}. Next, detailed information of the All methods return a JSON result returned by each method is given.
 
 \subsection{Method info}
 This method can be called with or without the \textit{expid} input parameter.
 
 When called without this parameter, \textbf{info()} returns meta-data with the list of experience identifiers associated to all \textit{experiences} defined in the OL. It also returns more information about the low-level API method call for retrieving meta-data. The result is a JSON object containing one single top-level member:
 
-\begin{enumerate}
+\begin{myEnumerate}
     \item \textbf{experiences}: A JSON object with the following top-level members:
-    \begin{enumerate}
+    \begin{myEnumerate}
         \item \textbf{list}: An array of JSON objects, each of which contains one single top-level member:
-        \begin{enumerate}
+        \begin{myEnumerate}
             \item \textbf{id}: A string with the experience identifier (expid) that is unmistakably related to one and only one \textit{experience} defined in the OL.
-        \end{enumerate}
+        \end{myEnumerate}
         \item \textbf{methods}: An array of JSON objects, each of which contains the following top-level members:
-        \begin{enumerate}
+        \begin{myEnumerate}
             \item \textbf{url}: A string with the URL to call the method.
             \item \textbf{type}: A string specifying the HTTP method to use.
             \item \textbf{description}: A string describing the method.
             \item \textbf{params}: An array of JSON objects detailing the required and optional parameters for the method:
-            \begin{enumerate}
+            \begin{myEnumerate}
                 \item \textbf{name}: A string with the name of the parameter
-                \item \textbf{required}: A string ("yes" or "no") specifiying whether the parameter is required ("yes") or optional ("no").
-                \item \textbf{location}: A string referencing the location for the parameter ("header", "query" or "body").
+                \item \textbf{required}: A string ("yes" or "no") specifying whether the parameter is required ("yes") or optional ("no").
+                \item \textbf{location}: A string referencing the location for the parameter ("query", "header" or "body").
                 \item \textbf{value}: [Optional] A string with the required value for the parameter.
                 \item \textbf{type}: [Optional] A string detailing the type of the parameter.
-            \end{enumerate}
+                \item \textbf{elements}: [Optional] An array of JSON objects with the following top-level members:
+                \begin{myEnumerate}
+                    \item \textbf{description}: A string with a description of the parameter element.
+                    \item \textbf{type}: A string specifying the type of the parameter element.
+                    \item \textbf{subtype}: [Optional] A string detailing the type of the elements inside an array parameter element when they are all of the same type.
+                \end{myEnumerate}
+                \item \textbf{subtype}: [Optional] A string detailing the type of the elements inside an array parameter when they are all of the same type.
+            \end{myEnumerate}
             \item \textbf{returns}: A string with the MIME-type of the method's result.
-            \item \textbf{example}: A string with an example on how to call the method.
-        \end{enumerate}
-    \end{enumerate}
-\end{enumerate}
+            \item \textbf{example}: A JSON object with the following top-level members:
+            \begin{myEnumerate}
+                    \item \textbf{url}: A string with the URL to call the method.
+                    \item \textbf{headers}:[Optional] A JSON object with the parameters to be placed on the HTTP request headers with as many top-level members as headers are set:
+                    \begin{myEnumerate}
+                        \item \textbf{HeaderName}: HeaderValue
+                    \end{myEnumerate}
+                    \item \textbf{body}: [Optional] A JSON object with the parameters to be placed on the HTTP request body and with the following top-level members:
+                    \begin{myEnumerate}
+                        \item \textbf{jsonrpc}: "2.0"
+                        \item \textbf{method}: A string with the HTTP method used ("get" or "post").
+                        \item \textbf{params}: An array with the following elements:
+                        \begin{myEnumerate}
+                            \item \textbf{expid}: A string with the \textit{eperience} identifier.
+                            \item \textbf{VariablesName}: An array of strings in which each element has the name of a variable in the \textit{control program} or in the \textit{simulation model}.
+                            \item \textbf{VariablesValue}: [Optional] An array of strings with the values to be written in the variables specified in the \textit{VariablesName} member, following the same order.
+                        \end{myEnumerate}
+                        \item \textbf{id}: A string with a number that indicates how many request have been sent till now, including this one.
+                    \end{myEnumerate}
+            \end{myEnumerate}
+        \end{myEnumerate}
+    \end{myEnumerate}
+\end{myEnumerate}
 
 Example:
 
@@ -256,7 +283,9 @@ Example:
                                }
                             ],
                   "returns": "application/json",
-                  "example": "10.192.38.68:8080/RIP?expId=Test1"
+                  "example": {
+                             "url": "10.192.38.68:8080/RIP?expId=Test1"
+                             }
                   }
                ]
     }
@@ -265,11 +294,123 @@ Example:
 
 When called with the \textit{expid} parameter, \textbf{info(expid)} returns meta-data of the referenced \textit{experience}. The result is a JSON object containing three top-level members:
 
-\begin{enumerate}
-    \item \textbf{info}: TODO
-    \item \textbf{readables}: TODO
-    \item \textbf{writables}: TODO
-\end{enumerate}
+\begin{myEnumerate}
+    \item \textbf{info}: A JSON object with the following top-level members:
+    \begin{myEnumerate}
+        \item \textbf{name}: A string with the name given to the experience.
+        \item \textbf{description}: A string with a description of the experience.
+        \item \textbf{authors}: A string with the name of the authors of the experience, separated by commas.
+        \item \textbf{keywords}: An array of strings, each with a keyword related to the experience.
+    \end{myEnumerate}
+    \item \textbf{readables}: A JSON object with the following top-level members:
+    \begin{myEnumerate}
+        \item \textbf{list}: An array of JSON objects with the following top-level members:
+        \begin{myEnumerate}
+            \item \textbf{name}: A string with the name of the variable.
+            \item \textbf{description}: A string with a description of the variable.
+            \item \textbf{type}: A string with the type of the variable: \textit{"string"}, \textit{"int"}, \textit{"float"} or \textit{"boolean"}.
+            \item \textbf{min}: A string with the minimum value the variable can have. In case of boolean variables, \textit{"false"}; in case of string variables, \textit{""}; in any other case, any number in string format.
+            \item \textbf{max}: A string with the minimum value the variable can have. In case of boolean variables, \textit{"true"}; in case of string variables, \textit{""}; in any other case, any number in string format.
+            \item \textbf{precision}: A string with the minimum value the variable can have. In case of boolean or string variables, \textit{""}; in any other case, any number in string format.
+        \end{myEnumerate}
+        \item \textbf{methods}: EXACTLY AS the \textit{methods} top-level member from the \textit{experiences} JSON object returned by the \textit{info()} method when called without parameters: an array of JSON objects, each of which contains the following top-level members:
+        \begin{myEnumerate}
+            \item \textbf{url}: A string with the URL to call the method.
+            \item \textbf{type}: A string specifying the HTTP method to use.
+            \item \textbf{description}: A string describing the method.
+           \item \textbf{params}: An array of JSON objects detailing the required and optional parameters for the method:
+            \begin{myEnumerate}
+                \item \textbf{name}: A string with the name of the parameter
+                \item \textbf{required}: A string ("yes" or "no") specifying whether the parameter is required ("yes") or optional ("no").
+                \item \textbf{location}: A string referencing the location for the parameter ("header", "query" or "body").
+                \item \textbf{value}: [Optional] A string with the required value for the parameter.
+                \item \textbf{type}: [Optional] A string detailing the type of the parameter.
+                \item \textbf{elements}: [Optional] An array of JSON objects with the following top-level members:
+                \begin{myEnumerate}
+                    \item \textbf{description}: A string with a description of the parameter element.
+                    \item \textbf{type}: A string specifying the type of the parameter element.
+                    \item \textbf{subtype}: [Optional] A string detailing the type of the elements inside an array parameter element when they are all of the same type.
+                \end{myEnumerate}
+                \item \textbf{subtype}: [Optional] A string detailing the type of the elements inside an array parameter when they are all of the same type.
+            \end{myEnumerate}
+            \item \textbf{returns}: A string with the MIME-type of the method's result.
+            \item \textbf{example}: A JSON object with the following top-level members:
+            \begin{myEnumerate}
+                    \item \textbf{url}: A string with the URL to call the method.
+                    \item \textbf{headers}:[Optional] A JSON object with the parameters to be placed on the HTTP request headers with as many top-level members as headers are set:
+                    \begin{myEnumerate}
+                        \item \textbf{HeaderName}: HeaderValue
+                    \end{myEnumerate}
+                    \item \textbf{body}: [Optional] A JSON object with the parameters to be placed on the HTTP request body and with the following top-level members:
+                    \begin{myEnumerate}
+                        \item \textbf{jsonrpc}: "2.0"
+                        \item \textbf{method}: A string with the HTTP method used ("get" or "post").
+                        \item \textbf{params}: An array with the following elements:
+                        \begin{myEnumerate}
+                            \item \textbf{expid}: A string with the \textit{eperience} identifier.
+                            \item \textbf{VariablesName}: An array of strings in which each element has the name of a variable in the \textit{control program} or in the \textit{simulation model}.
+                            \item \textbf{VariablesValue}: [Optional] An array of strings with the values to be written in the variables specified in the \textit{VariablesName} member, following the same order.
+                        \end{myEnumerate}
+                        \item \textbf{id}: A string with a number that indicates how many request have been sent till now, including this one.
+                    \end{myEnumerate}
+            \end{myEnumerate}
+        \end{myEnumerate}
+    \end{myEnumerate}
+    \item \textbf{writables}: A JSON object with the following top-level members:
+    \begin{myEnumerate}
+        \item \textbf{list}: EXACTLY AS the \textit{list} top-level member from \textit{readables}: an array of JSON objects with the following top-level members:
+        \begin{myEnumerate}
+            \item \textbf{name}: A string with the name of the variable.
+            \item \textbf{description}: A string with a description of the variable.
+            \item \textbf{type}: A string with the type of the variable: \textit{"string"}, \textit{"int"}, \textit{"float"} or \textit{"boolean"}.
+            \item \textbf{min}: A string with the minimum value the variable can have. In case of boolean variables, \textit{"false"}; in case of string variables, \textit{""}; in any other case, any number in string format.
+            \item \textbf{max}: A string with the minimum value the variable can have. In case of boolean variables, \textit{"true"}; in case of string variables, \textit{""}; in any other case, any number in string format.
+            \item \textbf{precision}: A string with the minimum value the variable can have. In case of boolean or string variables, \textit{""}; in any other case, any number in string format.
+        \end{myEnumerate}
+        \item \textbf{methods}: EXACTLY AS the \textit{methods} top-level member from the \textit{experiences} JSON object returned by the \textit{info()} method when called without parameters: an array of JSON objects, each of which contains the following top-level members:
+        \begin{myEnumerate}
+            \item \textbf{url}: A string with the URL to call the method.
+            \item \textbf{type}: A string specifying the HTTP method to use.
+            \item \textbf{description}: A string describing the method.
+            \item \textbf{params}: An array of JSON objects detailing the required and optional parameters for the method:
+            \begin{myEnumerate}
+                \item \textbf{name}: A string with the name of the parameter
+                \item \textbf{required}: A string ("yes" or "no") specifying whether the parameter is required ("yes") or optional ("no").
+                \item \textbf{location}: A string referencing the location for the parameter ("header", "query" or "body").
+                \item \textbf{value}: [Optional] A string with the required value for the parameter.
+                \item \textbf{type}: [Optional] A string detailing the type of the parameter.
+                \item \textbf{elements}: [Optional] An array of JSON objects with the following top-level members:
+                \begin{myEnumerate}
+                    \item \textbf{description}: A string with a description of the parameter element.
+                    \item \textbf{type}: A string specifying the type of the parameter element.
+                    \item \textbf{subtype}: [Optional] A string detailing the type of the elements inside an array parameter element when they are all of the same type.
+                \end{myEnumerate}
+                \item \textbf{subtype}: [Optional] A string detailing the type of the elements inside an array parameter when they are all of the same type.
+            \end{myEnumerate}
+            \item \textbf{returns}: A string with the MIME-type of the method's result.
+            \item \textbf{example}: A JSON object with the following top-level members:
+            \begin{myEnumerate}
+                    \item \textbf{url}: A string with the URL to call the method.
+                    \item \textbf{headers}:[Optional] A JSON object with the parameters to be placed on the HTTP request headers with as many top-level members as headers are set:
+                    \begin{myEnumerate}
+                        \item \textbf{HeaderName}: HeaderValue
+                    \end{myEnumerate}
+                    \item \textbf{body}: [Optional] A JSON object with the parameters to be placed on the HTTP request body and with the following top-level members:
+                    \begin{myEnumerate}
+                        \item \textbf{jsonrpc}: "2.0"
+                        \item \textbf{method}: A string with the HTTP method used ("get" or "post").
+                        \item \textbf{params}: An array with the following elements:
+                        \begin{myEnumerate}
+                            \item \textbf{expid}: A string with the \textit{eperience} identifier.
+                            \item \textbf{VariablesName}: An array of strings in which each element has the name of a variable in the \textit{control program} or in the \textit{simulation model}.
+                            \item \textbf{VariablesValue}: [Optional] An array of strings with the values to be written in the variables specified in the \textit{VariablesName} member, following the same order.
+                        \end{myEnumerate}
+                        \item \textbf{id}: A string with a number that indicates how many request have been sent till now, including this one.
+                    \end{myEnumerate}
+            \end{myEnumerate}
+        \end{myEnumerate}
+    \end{myEnumerate}
+\end{myEnumerate}
 
 Example:
 
@@ -285,10 +426,10 @@ Example:
     "list": [
                {
                "name": "intout",
-               "description": "integer outputs",
+               "description": "Integer output",
                "type": "int",
-               "min": "-2147483648",
-               "max": "2147483647",
+               "min": "-20",
+               "max": "10",
                "precision":"1"
                },
                {
@@ -309,7 +450,7 @@ Example:
                },
                {
                "name": "doubleout",
-               "description": "double output",
+               "description": "Double output",
                "type": "float",
                "min": "-Inf",
                "max": "Inf",
@@ -320,7 +461,7 @@ Example:
                   {
                   "url": "10.192.38.68:8080/RIP/SSE",
                   "type": "GET",
-                  "description": "Suscribes to an SSE to get regular updates on the servers' variables",
+                  "description": "Subscribes to an SSE to get regular updates on the servers' variables",
                   "params": [
                                {
                                "name": "Accept",
@@ -382,7 +523,11 @@ Example:
                                "type": "array",
                                "elements": [
                                    {
-                                   "description": "Experience id","type":"string"},{"description":"Name of variables to be retrieved",
+                                   "description": "Experience id",
+                                   "type":"string"
+                                   },
+                                   {
+                                   "description":"Name of variables to be retrieved",
                                    "type": "array",
                                    "subtype": "string"
                                    }
@@ -398,8 +543,7 @@ Example:
                             ],
                   "returns": "application/json",
                   "example": {
-                             "10.192.38.68:8080/RIP/POST": 
-                             {
+                             "url": "10.192.38.68:8080/RIP/POST",
                              "headers": {
                                         "Accept": "application/json",
                                         "Content-Type": "application/json"
@@ -408,13 +552,12 @@ Example:
                                      "jsonrpc": "2.0",
                                      "method": "get",
                                      "params": [
-                                                  "TestOK",
-                                                  ["var1","var2"]
+                                                  "Test1",
+                                                  ["intout","booleanout"]
                                                ],
                                      "id":"1"
                                      }
                              }
-                            }
                   },
                   {
                   "url": "http://camera1_ip/axis-cgi/mjpg/video.cgi",
@@ -441,15 +584,16 @@ Example:
                                }
                             ],
                   "returns": "video/x-motion-jpeg",
-                  "example": "http://camera1_ip/axis-cgi/mjpg/video.cgi"
-                  }
+                  "example": {
+                             "url": "http://camera1_ip/axis-cgi/mjpg/video.cgi"
+                             }
                ]
              },
 "writables": {
     "list": [
                {
                "name": "intin",
-               "description": "integer imput",
+               "description": "Integer input",
                "type": "int",
                "min": "-2147483648",
                "max": "2147483647",
@@ -457,7 +601,7 @@ Example:
                },
                {
                "name": "stop",
-               "description": "Stops the Vi",
+               "description": "Stops the control program",
                "type": "boolean",
                "min": "false",
                "max": "true",
@@ -480,7 +624,7 @@ Example:
                },
                {
                "name": "doublein",
-               "description": "double input",
+               "description": "Double input",
                "type": "float",
                "min": "-Inf",
                "max": "Inf",
@@ -550,23 +694,22 @@ Example:
                             ],
                   "returns": "application/json",
                   "example": {
-                    "10.192.38.68:8080/RIP/POST": {
-                      "headers": {
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                      },
-                      "body": {
-                        "jsonrpc": "2.0",
-                        "method": "set",
-                        "params": [
-                                    "TestOK",
-                                    ["var1","var2"],
-                                    ["val1","val2"]
-                                  ],
-                        "id": "1"
-                      }
-                    }
-                  }
+                             "url: "10.192.38.68:8080/RIP/POST",
+                             "headers": {
+                                        "Accept": "application/json",
+                                        "Content-Type": "application/json"
+                                        },
+                             "body": {
+                                     "jsonrpc": "2.0",
+                                     "method": "set",
+                                     "params": [
+                                                 "Test1",
+                                                 ["intin","stringin"],
+                                                 ["2","hello"]
+                                               ],
+                                     "id": "1"
+                                     }
+                             }
                   }
                ]
              }
