@@ -1,2 +1,2 @@
 # rip-spec
-Specification of the Remote Interoperability Protocol
+Specification of the Remote Interoperability Protocol for Online Laboratories
