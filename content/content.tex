@@ -37,7 +37,7 @@ The objective of RIP is to offer a simple, yet powerful, communication solution 
 
 RIP is designed to communicate web clients with OLs; either VLs or RLs. When used to communicate with a VL, RIP exposes meta-data and input and output methods and variables related to a simulation model that is hosted and runs on a computer (usually, a remote server). When used to communicate with a RL, RIP does the same thing with a \textit{control program} defined in a computer (usually, a remote server) to monitor and manipulate the lab equipment.
 
-Figure \ref{fig:Client-RIP-OL} shows the usage of the RIP protocol implemented in a RIP client and a RIP server to communicate a web client with an OL. The figure represents how an OL can implement either a VL, a RL, or any combination of both, each one defined as an independent \textit{experience}, referenced through a certain \textit{expid} parameter.
+Figure \ref{fig:Client-RIP-OL} shows the usage of the RIP protocol implemented in a RIP client and a RIP server to communicate a web client with an OL. The figure represents how an OL can implement either a VL, a RL, or any combination of both, each one defined as an independent \textit{experience}, referenced through a certain \textit{expId} parameter.
 
 \begin{figure}
 \centering
@@ -77,7 +77,7 @@ RIP is based on two cornerstones: POST and GET methods for the communications tr
 Communication between two software entities is possible when they talk the same protocol. Therefore, a RIP implementation is needed in both the client and the server.
 
 \subsection{Server Implementation Perspective}
-Figure \ref{fig:RIP_Architecture} depicts the architecture of a \emph{RIP Server} that implements the RIP protocol. To sum it up, there are three functional subsystems: the \emph{Web Server}, that handles client connections, user sessions, etc., the \emph{command interpreter}, that speaks RIP, and the \emph{executor}, that controls the execution of the laboratory \textit{control programs} or \textit{simulation models}.
+Figure \ref{fig:RIP_Architecture} depicts the architecture of a \emph{RIP Server} that implements the RIP protocol. To sum it up, there are three functional subsystems: the \emph{Web Server}, that handles client connections, user sessions, etc., the \emph{Command Interpreter}, that speaks RIP, and the \emph{Executor}, that controls the execution of the laboratory \textit{control programs} or \textit{simulation models}.
 
 \begin{figure}
 \centering
@@ -86,7 +86,7 @@ Figure \ref{fig:RIP_Architecture} depicts the architecture of a \emph{RIP Server
 \label{fig:RIP_Architecture}
 \end{figure}
 
-The Web Server admits (and handles in different ways) three types of requests: GET (used to retrieve \textit{experiences'} meta-data), SSE (used to get server-to-client data updates) and POST (used to send client-to-server updates or client-to-server requests for data updates). These different methods are each associated with the three basic cases of use, namely:
+The \textit{Web Server} component admits (and handles in different ways) three types of requests: GET (used to retrieve \textit{experiences'} meta-data), SSE (used to get server-to-client data updates) and POST (used to send client-to-server updates or client-to-server requests for data updates). These different methods are each associated with the three basic cases of use, namely:
 
 \begin{itemize}
     \item \emph{Meta-data} - A client, wanting to obtain information about the laboratory, launches an HTTP GET request to the URL associated with the laboratory. The RIP server responds with a JSON-RPC structure that informs the client, depending on the request's parameters, with one of the following:
@@ -109,11 +109,11 @@ A RIP client must simply implement the required communication protocol methods (
 \section{Protocol Functions (High-Level API)}
 The functions defined and used in the protocol are divided in two types: internal and external.
 
-The internal functions are private functions, not exposed to the web clients. These methods are used internally by RIP server implementations to communicate either with the \textit{simulation model} or the \textit{control program} used in the OL.
+The internal functions are private functions, used internally by RIP server implementations to communicate either with the \textit{simulation model} or the \textit{control program} used in the OL.
 
-The external functions are exposed through web services as public functions, and so, they are callable by the web clients. These methods are used by the RIP servers and clients to both get meta-data about the defined \textit{experiences} and to write and read data to and from the OL.
+The external functions are client-side methods. These functions are used by the RIP clients to both get meta-data about the defined \textit{experiences} and to write and read data to and from the OL.
 
-In this way, RIP servers must implement both the internal and the external functions while RIP clients must implement only the external functions (see Figure \ref{fig:Functions_Implementation}).
+In this way, RIP servers must implement the internal functions, while RIP clients must implement the external functions (see Figure \ref{fig:Functions_Implementation}). Client-based methods of the external functions in a RIP client communicate with the \textit{Web Server} of a RIP server, get translated by the \textit{Command Interpreter} into a series of two or more internal functions, and are finally executed by the \textit{Executor} component (see Figure \ref{fig:RIP_Architecture}).
 
 \begin{figure}
 \centering
@@ -127,8 +127,12 @@ In this way, RIP servers must implement both the internal and the external funct
 The list of existing internal functions a RIP server must implement is:
 
 \begin{enumerate}
-    \item \textit{readablelist}, \textit{writablelist}  $=$ \textbf{open}(\textit{expid}): Returns the list of readable and writable variables (in two different variables) defined in the \textit{experience} associated to the input \textit{expid} parameter.
-    \item \textbf{close}(\textit{expid}): Closes the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} defined by the input \textit{expid} parameter.
+    \item \textit{readablelist}, \textit{writablelist}  $=$ \textbf{open}(\textit{expId}): Returns the list of readable and writable variables (in two different variables) defined in the \textit{experience} associated to the input \textit{expId} parameter.
+    \item \textbf{close}(\textit{expId}): Closes the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} defined by the input \textit{expId} parameter.
+    \item \textbf{start}(\textit{expId}): Starts the execution of the \textit{control program} or \textit{simulation model} associated to the OL \textit{experience} defined by the input \textit{expId} parameter.
+    \item \textbf{stop}(\textit{expId}): Stops the execution of the \textit{control program} or \textit{simulation model} associated to the OL \textit{experience} defined by the input \textit{expId} parameter.
+    \item \textit{readvariablenames}, \textit{readvariablevalues} $=$ \textbf{get}(\textit{expId}, \textit{variablenames}): Retrieves the current values of the variables (\textit{readvariablevalues}) specified by the \textit{variablenames} input parameter. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the \textit{experience} defined by the \textit{expId} input parameter. When the \textbf{get()} method is called, \textit{readvariablenames} contains only the names of the variables that were successfully read, not all requested ones in \textit{variablenamess}.
+    \item \textbf{set}(\textit{expId}, \textit{variablenames}, \textit{variablevalues}): Writes the received values (\textit{variablevalues}) in the specified variables (\textit{variablenames}) of the appropiate OL \textit{experience}. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the (\textit{expId}) input parameter.
 \end{enumerate}
 
 \subsection{External Functions}
@@ -136,23 +140,20 @@ The list of existing internal functions a RIP server must implement is:
 The list of existing external functions a RIP server must implement so that a RIP client may use is:
 
 \begin{enumerate}
-    \item \textit{result} $=$ \textbf{info}(\textit{expid} = null): Retrieves the meta-data information about the \textit{experience} defined by the input \textit{expid} parameter.  This parameter is optional and if it is not specified, the method then returns meta-data information about all the \textit{experiences} defined.
-    \item \textit{result} $=$ \textbf{start}(\textit{expid}): Starts the execution of the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} associated to the input \textit{expid} parameter.
-    \item \textit{result} $=$ \textbf{stop}(\textit{expid}): Stops the execution of the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} defined by the input \textit{expid} parameter.
-    \item \textit{readvariablenames}, \textit{readvariablevalues} $=$ \textbf{get}(\textit{expid}, \textit{variablenames}): Retrieves the current values of the variables (\textit{readvariablevalues}) specified by the \textit{variablenames} input parameter. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the \textit{experience} defined by the \textit{expid} input parameter. When the \textbf{get()} method is called, \textit{readvariablenames} contains only the names of the variables that were successfully read, not all requested ones in \textit{variablenamess}.
-    \item \textit{result} $=$ \textbf{set}(\textit{expid}, \textit{variablenames}, \textit{variablevalues}): Writes the received values (\textit{variablevalues}) in the specified variables (\textit{variablenames}) of the appropiate OL \textit{experience}. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the (\textit{expid}) input parameter.
+    \item \textit{result} $=$ \textbf{info}(\textit{expId} = null): Retrieves the meta-data information about the \textit{experience} defined by the input \textit{expId} parameter.  This parameter is optional and if it is not specified, the method then returns meta-data information about all the \textit{experiences} defined.
+    \item \textit{result} $=$ \textbf{connect}(\textit{expId}): Connects to an \textit{experience} defined by the input \textit{expId} parameter and establishes connection to the SSE to start receiving server data updates.
+    \item \textit{result} $=$ \textbf{get}(\textit{expId}, \textit{variablenames}): Retrieves the current values of the variables (\textit{readvariablevalues}) specified by the \textit{variablenames} input parameter. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the \textit{experience} defined by the \textit{expId} input parameter.
+    \item \textit{result} $=$ \textbf{set}(\textit{expId}, \textit{variablenames}, \textit{variablevalues}): Writes the received values (\textit{variablevalues}) in the specified variables (\textit{variablenames}) of the appropiate OL \textit{experience}. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the (\textit{expId}) input parameter.
 \end{enumerate}
 
 Where:
 
 Variables \textit{variablenames} and \textit{variablevalues} are arrays of text. For example: \textit{variablenamess} $=$ ["x", "y", ...], \textit{variablevalues} $=$ ["10", "a", ...].
 
-Each method returns an error indicator when the operation is not completed successfully.
-
-At the moment, only numbers, text and booleans are supported as valid types for \textit{variablevalues} and \textit{readvariablevalues} in the \textbf{set}() and \textbf{get}() methods, respectively.
+Sections \ref{sec:User_Doc} and \ref{sec:Developer_Doc} give more information about the external and internal functions, respectively.
 
 \section{Protocol Communication Methods (Low-Level API)}
-Three HTTP communication methods are available in RIP:
+Three HTTP communication methods are available in RIP for communicating the client with the server:
 
 \begin{enumerate}
     \item \textbf{GET} - To obtain OL meta-data.
@@ -166,10 +167,10 @@ Table \ref{tab:low-high-levels-correspondence} shows the correspondence between 
     \centering
     \begin{tabular}{|c|c|}\hline
          &  \\HTTP Method (Low-Level API) & RIP function (High-Level API)\\\hline
-         &  \\GET & info(), info(expid) \\\hline
-         &  \\POST & set(expid, variablenames, variablevalues),
-            \\     & get(expid, variablenames), start(expid), stop() \\\hline
-         &  \\SSE & TODO \\\hline
+         &  \\GET & info(), info(expId) \\\hline
+         &  \\POST & set(expId, variablenames, variablevalues),
+            \\     & get(expId, variablenames) \\\hline %, start(expId), stop(expId) \\\hline
+         &  \\SSE & connect(expId) \\\hline
     \end{tabular}
     \caption{RIP functions - HTTP methods correspondence}
     \label{tab:low-high-levels-correspondence}
@@ -189,12 +190,13 @@ A common and easy way of implementing RIP in web clients is through the use of t
 RIP server implementations may differ a lot depending on the language used to make the implementation, and so do their possible dependencies.
 
 \section{User Documentation}
-This section provides a deeper insight on the high-level API, which is the only knowledge required by a user to use a RIP client implementation to communicate with an OL running a RIP server.
+\label{sec:User_Doc}
+This section provides a deeper insight on the  external functions of the high-level API, which is the only knowledge required by a user to use a RIP client implementation to communicate with an OL running a RIP server.
 
-A RIP client must implement a class with the methods described in Section \ref{sec:External_Functions}. Next, detailed information of the All methods return a JSON result returned by each method is given.
+A RIP client must implement a class with the methods described in Section \ref{sec:External_Functions}. Next, detailed information of each of them is given. 
 
 \subsection{Method info}
-This method can be called with or without the \textit{expid} input parameter.
+This method can be called with or without the \textit{expId} input parameter.
 
 When called without this parameter, \textbf{info()} returns meta-data with the list of experience identifiers associated to all \textit{experiences} defined in the OL. It also returns more information about the low-level API method call for retrieving meta-data. The result is a JSON object containing one single top-level member:
 
@@ -203,7 +205,7 @@ When called without this parameter, \textbf{info()} returns meta-data with the l
     \begin{myEnumerate}
         \item \textbf{list}: An array of JSON objects, each of which contains one single top-level member:
         \begin{myEnumerate}
-            \item \textbf{id}: A string with the experience identifier (expid) that is unmistakably related to one and only one \textit{experience} defined in the OL.
+            \item \textbf{id}: A string with the experience identifier (expId) that is unmistakably related to one and only one \textit{experience} defined in the OL.
         \end{myEnumerate}
         \item \textbf{methods}: An array of JSON objects, each of which contains the following top-level members:
         \begin{myEnumerate}
@@ -236,10 +238,10 @@ When called without this parameter, \textbf{info()} returns meta-data with the l
                     \item \textbf{body}: [Optional] A JSON object with the parameters to be placed on the HTTP request body and with the following top-level members:
                     \begin{myEnumerate}
                         \item \textbf{jsonrpc}: "2.0"
-                        \item \textbf{method}: A string with the HTTP method used ("get" or "post").
+                        \item \textbf{method}: A string with the RIP method to invoke ("get", "set" or "connect"). % "start" or "stop").
                         \item \textbf{params}: An array with the following elements:
                         \begin{myEnumerate}
-                            \item \textbf{expid}: A string with the \textit{eperience} identifier.
+                            \item \textbf{expId}: A string with the \textit{eperience} identifier.
                             \item \textbf{VariablesName}: An array of strings in which each element has the name of a variable in the \textit{control program} or in the \textit{simulation model}.
                             \item \textbf{VariablesValue}: [Optional] An array of strings with the values to be written in the variables specified in the \textit{VariablesName} member, following the same order.
                         \end{myEnumerate}
@@ -250,7 +252,15 @@ When called without this parameter, \textbf{info()} returns meta-data with the l
     \end{myEnumerate}
 \end{myEnumerate}
 
-Example:
+\textbf{\underline{Example:}}
+
+\textit{Request:}
+
+The \textit{info()} RIP client method sends a GET request to: \url{http(s)://BASEURL/RIP}
+
+\textit{Response:}
+
+The RIP server responds to the GET message with the following body:
 
 \begin{lstlisting}
 {
@@ -292,7 +302,7 @@ Example:
 }
 \end{lstlisting}
 
-When called with the \textit{expid} parameter, \textbf{info(expid)} returns meta-data of the referenced \textit{experience}. The result is a JSON object containing three top-level members:
+When called with the \textit{expId} parameter, \textbf{info(expId)} returns meta-data of the referenced \textit{experience}. The result is a JSON object containing three top-level members:
 
 \begin{myEnumerate}
     \item \textbf{info}: A JSON object with the following top-level members:
@@ -344,10 +354,10 @@ When called with the \textit{expid} parameter, \textbf{info(expid)} returns meta
                     \item \textbf{body}: [Optional] A JSON object with the parameters to be placed on the HTTP request body and with the following top-level members:
                     \begin{myEnumerate}
                         \item \textbf{jsonrpc}: "2.0"
-                        \item \textbf{method}: A string with the HTTP method used ("get" or "post").
+                        \item \textbf{method}: A string with the RIP method to invoke ("get", "set" or "connect"). %, "start" or "stop").
                         \item \textbf{params}: An array with the following elements:
                         \begin{myEnumerate}
-                            \item \textbf{expid}: A string with the \textit{eperience} identifier.
+                            \item \textbf{expId}: A string with the \textit{eperience} identifier.
                             \item \textbf{VariablesName}: An array of strings in which each element has the name of a variable in the \textit{control program} or in the \textit{simulation model}.
                             \item \textbf{VariablesValue}: [Optional] An array of strings with the values to be written in the variables specified in the \textit{VariablesName} member, following the same order.
                         \end{myEnumerate}
@@ -398,10 +408,10 @@ When called with the \textit{expid} parameter, \textbf{info(expid)} returns meta
                     \item \textbf{body}: [Optional] A JSON object with the parameters to be placed on the HTTP request body and with the following top-level members:
                     \begin{myEnumerate}
                         \item \textbf{jsonrpc}: "2.0"
-                        \item \textbf{method}: A string with the HTTP method used ("get" or "post").
+                        \item \textbf{method}: A string with the RIP method to invoke ("get", "set" or "connect"). %, "start" or "stop").
                         \item \textbf{params}: An array with the following elements:
                         \begin{myEnumerate}
-                            \item \textbf{expid}: A string with the \textit{eperience} identifier.
+                            \item \textbf{expId}: A string with the \textit{eperience} identifier.
                             \item \textbf{VariablesName}: An array of strings in which each element has the name of a variable in the \textit{control program} or in the \textit{simulation model}.
                             \item \textbf{VariablesValue}: [Optional] An array of strings with the values to be written in the variables specified in the \textit{VariablesName} member, following the same order.
                         \end{myEnumerate}
@@ -412,7 +422,15 @@ When called with the \textit{expid} parameter, \textbf{info(expid)} returns meta
     \end{myEnumerate}
 \end{myEnumerate}
 
-Example:
+\textbf{\underline{Example:}}
+
+\textit{Request:}
+
+The \textit{info(expId)} RIP client method sends a GET request to: \url{http(s)://BASEURL/RIP?expId=Test1}
+
+\textit{Response:}
+
+The RIP server responds to the GET message with the following body:
 
 \begin{lstlisting}
 {
@@ -716,22 +734,166 @@ Example:
 }
 \end{lstlisting}
 
-\subsection{Method start}
-TODO.
+\subsection{Method connect}
+This method has one input parameter (\textit{expId}), for specifying the \textit{experience} the client is going to connect to. 
 
-\subsection{Method stop}
-TODO.
+When this method is called, an SSE communication is established with the RIP server. The result is a stream of data (which periodicity or aperiodicity is defined in the server) that can be captured by the onmessage() and the addEventListener() methods of the EventSource object, for example \cite{eventsource}. The structure of the data obtained through the established SSE follows the SSE standard:
+
+\begin{myEnumerate}
+    \item \textbf{retry}: A number specifying the time (in miliseconds) to wait before the client tries to automatically reconnect to the SSE. This field appear only once per connection.
+    \item \textbf{event}: The name of the event that follows
+    \item \textbf{id}: A unique number that identifies the event.
+    \item \textbf{data}: A JSON object with the following top-level members:
+    \begin{myEnumerate}
+        \item \textbf{data}: An array with the following elements:
+        \begin{myEnumerate}
+        \item \textbf{VariablesName}: An array of strings with the names of the retrieved variables.
+        \item \textbf{VariablesValue}: A mixed array with the values of the retrieved variables.
+    \end{myEnumerate}
+    \end{myEnumerate}
+\end{myEnumerate}
+
+\textbf{\underline{Example:}}
+
+\textit{Request:}
+
+The \textit{connect("Test1")} RIP client method established an SSE connection to: \url{http(s)://URL/RIP/SSE?expId=Test1}.
+
+\textit{Response:}
+
+The RIP server responds with a stream of data that follows this format:
+
+\begin{lstlisting}
+retry: 2000
+
+event: periodiclabdata
+id: 1
+data: 
+{
+"result": [
+             [
+               "intout",
+               "doubleout",
+               "stringout",
+               "booleanout"
+             ],
+             [
+               -2,
+               3.5,
+               "testing",
+               true
+             ]
+          ]
+}
+\end{lstlisting}
+
+A RIP client implementation must automatically capture these events and assign the received values to their corresponding variables in the client side.
 
 \subsection{Method set}
-TODO.
+This method has three input parameters: \textit{expId}, \textit{VariablesName} and \textit{VariablesValue}.
+
+When this method is called, the values specified in \textit{VariablesValue} are assigned to the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName}. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter. This method returns a JSON object with information about the result of the operation. The resulting JSON object contains the following top-level members:
+
+\begin{myEnumerate}
+    \item \textbf{jsonrpc}: "2.0"
+    \item \textbf{result}: Either \textit{true}, if the operation was completed succesfully by the RIP server, or \textit{false}, if it was not.
+    \item \textbf{id}: A string with a number that indicates how many request have been sent till now, including this one.
+\end{myEnumerate}
+
+\textbf{\underline{Example:}}
+
+\textit{Request:}
+
+The \textit{set("Test1", ["doublein", "intin"], [0.5, -1])} RIP client method sends a POST request to: \url{http(s)://URL/RIP/POST?expId=Test1} with body:
+
+\begin{lstlisting}
+{
+"jsonrpc": "2.0",
+"method": "set",
+"params": [
+	         "Test1",
+	         ["doublein", "intin"],
+	         [0.5, -1]
+          ],
+"id": "2"
+}
+\end{lstlisting}
+
+\textit{Response:}
+
+The RIP server responds to the POST message with the following body:
+
+\begin{lstlisting}
+{
+"jsonrpc": "2.0",
+"result": true,
+"id": "2"
+}
+\end{lstlisting}
 
 \subsection{Method get}
-TODO.
+This method has two input parameters: \textit{expId} and \textit{VariablesName}.
+
+When this method is called, the values of the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName} are returned in a JSON object. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter. The resulting JSON object that contains the following top-level members:
+
+\begin{myEnumerate}
+    \item \textbf{jsonrpc}: "2.0"
+    \item \textbf{result}: An array with the following elements:
+    \begin{myEnumerate}
+        \item \textbf{VariablesName}: An array of strings with the names of the retrieved variables.
+        \item \textbf{VariablesValue}: A mixed array with the values of the retrieved variables.
+    \end{myEnumerate}
+    \item \textbf{id}: A string with a number that indicates how many request have been sent till now, including this one.
+\end{myEnumerate}
+
+\textbf{\underline{Example:}}
+
+\textit{Request:}
+
+The \textit{get("Test1", ["doubleout", "intout"])} RIP client method sends a POST request to: \url{http(s)://URL/RIP/POST?expId=Test1} with body:
+
+\begin{lstlisting}
+{
+"jsonrpc": "2.0",
+"method": "get",
+"params": [
+  	         "Test1",
+  	         ["doubleout", "intout"]
+          ],
+"id": "3"
+}
+\end{lstlisting}
+
+\textit{Response:}
+
+The RIP server responds to the POST message with the following body:
+
+\begin{lstlisting}
+{
+"jsonrpc": "2.0",
+"result": [
+            [
+              "doubleout",
+              "intout"
+            ],
+            [
+              0.5,
+              -1
+            ]
+          ],
+"id": "3"
+}
+\end{lstlisting}
 
 \section{Developer Documentation}
-This section provides more details on the low-level API, which is the knowledge required to either implement a new RIP client or a new RIP server or to modify an existing one.
+\label{sec:Developer_Doc}
+This section provides more details on the internal functions of the high-level API and on the low-level API, which, along with the information provided in last section for the external functions of the high-level API, is the knowledge required to either implement a new RIP client or a new RIP server, or to modify existing ones.
 
 TODO.
+
+Each method returns an error indicator when the operation is not completed successfully.
+
+At the moment, only numbers, text and booleans are supported as valid types for \textit{variablevalues} and \textit{readvariablevalues} in the \textbf{set}() and \textbf{get}() methods, respectively.
 
 
 \chapter{External Interface Requirements}
