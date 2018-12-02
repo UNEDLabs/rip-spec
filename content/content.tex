@@ -156,25 +156,32 @@ Sections \ref{sec:User_Doc} and \ref{sec:Developer_Doc} give more information ab
 Three HTTP communication methods are available in RIP for communicating the client with the server:
 
 \begin{enumerate}
-    \item \textbf{GET} - To obtain OL meta-data.
-    \item \textbf{POST} - To send client-to-server requests for (i) writing OL variables' values and (ii) reading OL variables' values.
-    \item \textbf{SSE} - To subscribe the client to data streams so that it receives server-to-client OL variables' values updates.
+    \item \textbf{GET} - To obtain OL meta-data. A RIP server must implement a web service endpoint at \url{BaseURL:port/RIP} for attending these requests.
+    \item \textbf{POST} - To send client-to-server requests for (i) writing OL variables' values and (ii) reading OL variables' values. A RIP server must implement a web service endpoint at \url{BaseURL:port/RIP/POST} for attending these requests.
+    \item \textbf{SSE} - To subscribe the client to data streams so that it receives server-to-client OL variables' values updates. A RIP server must implement a web service endpoint at \url{BaseURL:port/RIP/SSE} for attending these requests.
 \end{enumerate}
 
-Table \ref{tab:low-high-levels-correspondence} shows the correspondence between the external protocol functions of the high-level API and the HTTP methods of the low-level API:
+Table \ref{tab:low-high-levels-correspondence} shows the correspondence between the external protocol functions of the high-level API and the HTTP methods of the low-level API. The right column also indicates the RIP's web server endpoint to which each of the methods and functions communicate with. A representation of these same ideas is shown in Figure \ref{fig:client-server-funtions-correspondence}.
 
 \begin{table}[]
     \centering
-    \begin{tabular}{|c|c|}\hline
-         &  \\HTTP Method (Low-Level API) & RIP function (High-Level API)\\\hline
-         &  \\GET & info(), info(expId) \\\hline
-         &  \\POST & set(expId, variablenames, variablevalues),
-            \\     & get(expId, variablenames) \\\hline %, start(expId), stop(expId) \\\hline
-         &  \\SSE & connect(expId) \\\hline
+    \begin{tabular}{c|c|c}
+        \hline
+         & \\RIP client function (High-Level API) & HTTP Method (Low-Level API) & Web server endpoint \\
+         \hline
+         & \\info(), info(expId) & GET & /BaseURL:port/RIP \\
+         \hline
+         & \\set(expId, variablenames, variablevalues), & POST & /BaseURL:port/RIP/POST
+           \\get(expId, variablenames) &  & \\
+        \hline
+         & \\connect(expId) & SSE & /BaseURL:port/RIP/SSE \\
+         \hline
     \end{tabular}
-    \caption{RIP functions - HTTP methods correspondence}
+    \caption{Correspondence between RIP functions, HTTP methods and RIP's web server endpoints}
     \label{tab:low-high-levels-correspondence}
 \end{table}
+
+Section \ref{sec:Developer_Doc} gives more information about the use of these HTTP methods in RIP's low-level API.
 
 \section{Operating Environment}
 RIP uses only HTTP methods for the communication. Therefore, it works in any major web browser. However, RIP also relies on the use of SSEs, which, up to date, are not supported by Microsoft Internet Explorer nor Microsoft Edge. Nevertheless, there are numerous poly-fill solutions for implementing SSE so that they work on these browsers that do not support them natively.
@@ -182,23 +189,113 @@ RIP uses only HTTP methods for the communication. Therefore, it works in any maj
 \section{Design and Implementation Constraints}
 RIP is designed to only use pure HTTP methods on purpose, with the aim of guaranteeing its correct functioning from web browsers. Therefore, the only hard implementation constraint is that HTTP is used for implementing RIP communications.
 
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{images/Correspondence.pdf}
+\caption{Illustration of the existing correspondence between RIP functions, HTTP methods and RIP's web server endpoints}
+\label{fig:client-server-funtions-correspondence}
+\end{figure}
+
 \section{Assumptions and Dependencies}
 RIP depends solely on the use of HTTP POST and GET methods and on the JSON format for exchanging data. 
-
-A common and easy way of implementing RIP in web clients is through the use of the EventSource object \cite{eventsource} (for the SSEs) and the XMLHTTPRequest object \cite{xhr} or the Fetch API \cite{fetch} (for the POST messages), which are both supported by all major web browsers. Still, implementations without the use of such APIs are possible, just more laborious. 
+A common and easy way of implementing RIP in web clients is through the use of the EventSource object \cite{sse} (for the SSEs) and the XMLHttpRequest object \cite{xhr} or the Fetch API \cite{fetch} (for the POST messages), which are both supported by all major web browsers. Still, implementations without the use of such APIs are possible, just more laborious. 
 
 RIP server implementations may differ a lot depending on the language used to make the implementation, and so do their possible dependencies.
 
 \section{User Documentation}
 \label{sec:User_Doc}
-This section provides a deeper insight on the  external functions of the high-level API, which is the only knowledge required by a user to use a RIP client implementation to communicate with an OL running a RIP server.
+This section provides a deeper insight on the external functions of the high-level API from a final user point of view. This is the only knowledge required by such a user to use a RIP client implementation to communicate with an OL running a RIP server.
 
-A RIP client must implement a class with the methods described in Section \ref{sec:External_Functions}. Next, detailed information of each of them is given. 
+A RIP client must implement a class with the methods described in Section \ref{sec:External_Functions}. Next, detailed information of each of them is given. This information includes a description of: 1) the method itself, its input parameters and the result returned by the method. 
 
 \subsection{Method info}
 This method can be called with or without the \textit{expId} input parameter.
 
-When called without this parameter, \textbf{info()} returns meta-data with the list of experience identifiers associated to all \textit{experiences} defined in the OL. It also returns more information about the low-level API method call for retrieving meta-data. The result is a JSON object containing one single top-level member:
+When called without this parameter, \textbf{info()} returns meta-data with the list of experience identifiers associated to all \textit{experiences} defined in the OL. It also returns more information about the low-level API method call for retrieving meta-data.
+
+When called with the \textit{expId} parameter, \textbf{info(expId)} returns meta-data of the referenced \textit{experience}.
+
+The result returned by this method is... TODO. %Jesus - En este caso, la información devuelta es justamente la que se detalla y explica en la sección de Developer Documentation, pero aquí habría que intentar hablar de ellos desde un punto de vista del usuario solamente.
+
+\subsection{Method connect}
+This method has one input parameter (\textit{expId}), for specifying the \textit{experience} the client is going to connect to.
+
+The result returned by this method is... TODO. %Jesus - Habría que explicar que las variables deben ser enlazadas antes para que se produzca la actualización de valores automática de las mismas... para esto debe existir otro método que usa el cliente rip y que también habría que llamar (en nuestra implementación de EjsS, se hace a través de una GUI, pero podría no ser así). Habría que incluir ese método como subsection aquí y en la sección 2.2.2.
+
+\subsection{Method set}
+This method has three input parameters: \textit{expId}, \textit{VariablesName} and \textit{VariablesValue}.
+
+When this method is called, the values specified in \textit{VariablesValue} are assigned to the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName}. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter. 
+
+The result returned by this method is... TODO. %Jesus - ¿Qué devuelve el método rip.set() de EjsS?
+
+\subsection{Method get}
+This method has two input parameters: \textit{expId} and \textit{VariablesName}.
+
+When this method is called, the values of the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName} are returned in a JSON object. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter.
+
+The result returned by this method is... TODO. %Jesus - ¿Qué devuelve el método rip.get() de EjsS exactamente?
+
+\section{Developer Documentation}
+\label{sec:Developer_Doc}
+This section provides more details on the internal functions of the high-level API and on the low-level API, which represents the knowledge required to either implement a new RIP client or a new RIP server, or to modify existing ones.
+
+\subsection{Internal Functions of the High-Level API}
+TODO. %Dictino - Entre otras cosas, habría que mencionar cómo se usan estos métodos según qué external function se haya recibido. Por ejemplo, si se ha recibido el info(), supongo que se usarían tres métodos: 1. open, 2. get, 3. close. Si lo pones por escrito, puedo preparar también una tablita o dibujito que lo ilustre.
+
+\subsubsection{Method open}
+TODO. %Dictino
+
+\subsubsection{Method close}
+TODO. %Dictino
+
+\subsubsection{Method start}
+TODO. %Dictino
+
+\subsubsection{Method stop}
+TODO. %Dictino
+
+\subsubsection{Method get}
+TODO. %Dictino
+
+\subsubsection{Method set}
+TODO. %Dictino
+
+\subsection{Low-Level API}
+Each method from the High-Level API is implemented with an HTTP method that follows the Low-Level API. The nature and structure of the HTTP messages that must be built by each High-Level API method, the RIP server endpoint to which it must connect, and the result returned by the RIP server to each of these messages is given in this section.
+
+For the sake of clarity, each method also includes an example. The relevant parameters for this example can be found in Table \ref{tab:low-level-example}.
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+         & \\Parameter & Value \\
+         \hline
+         & \\Protocol & http \\
+         \hline
+         & \\BaseURL & 10.192.38.56 \\
+        \hline
+        & \\Communication port & 8080 \\
+        \hline
+         & \\Declared experiences & Test1, Test2 \\
+        \hline
+         & \\Declared inputs in \textit{control program} & stringin, intin, doublein, booleanin
+         \\or \textit{simulation model} for Test1 & \\
+        \hline
+        & \\Declared outputs in \textit{control program} & stringout, intout, doubleout, booleanout
+          \\or \textit{simulation model} for Test1 & \\
+        \hline
+    \end{tabular}
+    \caption{Relevant parameters for the examples.}
+    \label{tab:low-level-example}
+\end{table}
+
+\subsubsection{Method info - GET}
+The \textit{info()} RIP client method sends a GET request to \url{http(s)://BaseURL:port/RIP}, while \textit{info(expIdValue)} does the same with \url{http(s)://BaseURL:port/RIP?expId=expIdValue}.
+
+The result of calling this method without the \textit{expId} input parameter is a JSON object containing one single top-level member:
 
 \begin{myEnumerate}
     \item \textbf{experiences}: A JSON object with the following top-level members:
@@ -256,7 +353,7 @@ When called without this parameter, \textbf{info()} returns meta-data with the l
 
 \textit{Request:}
 
-The \textit{info()} RIP client method sends a GET request to: \url{http(s)://BASEURL/RIP}
+The \textit{info()} RIP client method sends a GET request to: \url{http://10.192.38.56:8080/RIP}
 
 \textit{Response:}
 
@@ -275,7 +372,7 @@ The RIP server responds to the GET message with the following body:
             ],
     "methods": [
                   {
-                  "url": "10.192.38.68:8080/RIP",
+                  "url": "10.192.38.56:8080/RIP",
                   "type": "GET",
                   "description": "Retrieves information (variables and methods) of the experiences in the server",
                   "params": [
@@ -294,7 +391,7 @@ The RIP server responds to the GET message with the following body:
                             ],
                   "returns": "application/json",
                   "example": {
-                             "url": "10.192.38.68:8080/RIP?expId=Test1"
+                             "url": "10.192.38.56:8080/RIP?expId=Test1"
                              }
                   }
                ]
@@ -302,7 +399,7 @@ The RIP server responds to the GET message with the following body:
 }
 \end{lstlisting}
 
-When called with the \textit{expId} parameter, \textbf{info(expId)} returns meta-data of the referenced \textit{experience}. The result is a JSON object containing three top-level members:
+The result of calling this method with the \textit{expId} input parameter is a JSON object containing three top-level members:
 
 \begin{myEnumerate}
     \item \textbf{info}: A JSON object with the following top-level members:
@@ -426,7 +523,7 @@ When called with the \textit{expId} parameter, \textbf{info(expId)} returns meta
 
 \textit{Request:}
 
-The \textit{info(expId)} RIP client method sends a GET request to: \url{http(s)://BASEURL/RIP?expId=Test1}
+The \textit{info(expId)} RIP client method sends a GET request to: \url{http://10.192.38.56:8080/RIP?expId=Test1}
 
 \textit{Response:}
 
@@ -477,7 +574,7 @@ The RIP server responds to the GET message with the following body:
             ],
     "methods": [  
                   {
-                  "url": "10.192.38.68:8080/RIP/SSE",
+                  "url": "10.192.38.56:8080/RIP/SSE",
                   "type": "GET",
                   "description": "Subscribes to an SSE to get regular updates on the servers' variables",
                   "params": [
@@ -502,10 +599,10 @@ The RIP server responds to the GET message with the following body:
                                }
                             ],
                   "returns": "text/event-stream",
-                  "example": "10.192.38.68:8080/RIP/SSE?expId=TestOK"
+                  "example": "10.192.38.56:8080/RIP/SSE?expId=TestOK"
                   },
                   {
-                  "url": "10.192.38.68:8080/RIP/POST",
+                  "url": "10.192.38.56:8080/RIP/POST",
                   "type": "POST",
                   "description": "Sends a request to retrieve the value of one or more servers' variables on demand",
                   "params": [
@@ -561,7 +658,7 @@ The RIP server responds to the GET message with the following body:
                             ],
                   "returns": "application/json",
                   "example": {
-                             "url": "10.192.38.68:8080/RIP/POST",
+                             "url": "10.192.38.56:8080/RIP/POST",
                              "headers": {
                                         "Accept": "application/json",
                                         "Content-Type": "application/json"
@@ -618,14 +715,6 @@ The RIP server responds to the GET message with the following body:
                "precision":"1"
                },
                {
-               "name": "stop",
-               "description": "Stops the control program",
-               "type": "boolean",
-               "min": "false",
-               "max": "true",
-               "precision":""
-               },
-               {
                "name": "booleanin",
                "description": "Boolean input",
                "type": "boolean",
@@ -651,7 +740,7 @@ The RIP server responds to the GET message with the following body:
             ],
     "methods": [
                   {
-                  "url": "10.192.38.68:8080/RIP/POST",
+                  "url": "10.192.38.56:8080/RIP/POST",
                   "type": "POST",
                   "description": "Sends a request to write the value of one or more servers' variables on demand",
                   "params": [
@@ -712,7 +801,7 @@ The RIP server responds to the GET message with the following body:
                             ],
                   "returns": "application/json",
                   "example": {
-                             "url: "10.192.38.68:8080/RIP/POST",
+                             "url: "10.192.38.56:8080/RIP/POST",
                              "headers": {
                                         "Accept": "application/json",
                                         "Content-Type": "application/json"
@@ -734,8 +823,8 @@ The RIP server responds to the GET message with the following body:
 }
 \end{lstlisting}
 
-\subsection{Method connect}
-This method has one input parameter (\textit{expId}), for specifying the \textit{experience} the client is going to connect to. 
+\subsubsection{Method connect - SSE}
+The \textit{connect(expIdValue)} RIP client method establishes an SSE connection with: \url{http://10.192.38.56:8080/RIP/SSE?expId=expIdValue}.
 
 When this method is called, an SSE communication is established with the RIP server. The result is a stream of data (which periodicity or aperiodicity is defined in the server) that can be captured by the onmessage() and the addEventListener() methods of the EventSource object, for example \cite{eventsource}. The structure of the data obtained through the established SSE follows the SSE standard:
 
@@ -757,7 +846,7 @@ When this method is called, an SSE communication is established with the RIP ser
 
 \textit{Request:}
 
-The \textit{connect("Test1")} RIP client method established an SSE connection to: \url{http(s)://URL/RIP/SSE?expId=Test1}.
+The \textit{connect("Test1")} RIP client method establishes an SSE connection with: \url{http://10.192.38.56:8080/RIP/SSE?expId=Test1}.
 
 \textit{Response:}
 
@@ -789,10 +878,22 @@ data:
 
 A RIP client implementation must automatically capture these events and assign the received values to their corresponding variables in the client side.
 
-\subsection{Method set}
-This method has three input parameters: \textit{expId}, \textit{VariablesName} and \textit{VariablesValue}.
+\subsubsection{Method set - POST}
+The \textit{set(expIdValue, VariablesNames, VariablesValues)} RIP client method sends a POST request to: \url{http(s)://BaseURL:port/RIP/POST?expId=expIdValue} with a JSON body with the following top-level members:
 
-When this method is called, the values specified in \textit{VariablesValue} are assigned to the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName}. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter. This method returns a JSON object with information about the result of the operation. The resulting JSON object contains the following top-level members:
+\begin{myEnumerate}
+    \item \textbf{jsonrpc}: "2.0"
+    \item \textbf{method}: "set".
+    \item \textbf{params}: An array with the following elements:
+    \begin{myEnumerate}
+        \item \textbf{expId}: A string with the \textit{experience} identifier.
+        \item \textbf{VariablesName}: An array of strings with the name of the variables in the \textit{control program} or \textit{simulation model} whose values are going to be overwritten.
+        \item \textbf{VariablesValue}: A mixed array with the values to write in the \textit{control program's} or \textit{simulation model's} variables.
+    \end{myEnumerate}
+    \item \textbf{id}: A string with a number that indicates how many request have been sent till now, including this one.
+\end{myEnumerate}
+
+This method returns a JSON object with information about the result of the operation. The resulting JSON object contains the following top-level members:
 
 \begin{myEnumerate}
     \item \textbf{jsonrpc}: "2.0"
@@ -804,7 +905,7 @@ When this method is called, the values specified in \textit{VariablesValue} are 
 
 \textit{Request:}
 
-The \textit{set("Test1", ["doublein", "intin"], [0.5, -1])} RIP client method sends a POST request to: \url{http(s)://URL/RIP/POST?expId=Test1} with body:
+The \textit{set("Test1", ["doublein", "intin"], [0.5, -1])} RIP client method sends a POST request to: \url{http(s)://BaseURL:port/RIP/POST?expId=Test1} with body:
 
 \begin{lstlisting}
 {
@@ -831,10 +932,21 @@ The RIP server responds to the POST message with the following body:
 }
 \end{lstlisting}
 
-\subsection{Method get}
-This method has two input parameters: \textit{expId} and \textit{VariablesName}.
+\subsubsection{Method get - POST}
+The \textit{set(expIdValue, VariablesNames)} RIP client method sends a POST request to: \url{http(s)://BaseURL:port/RIP/POST?expId=expIdValue} with a JSON body with the following top-level members:
 
-When this method is called, the values of the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName} are returned in a JSON object. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter. The resulting JSON object that contains the following top-level members:
+\begin{myEnumerate}
+    \item \textbf{jsonrpc}: "2.0"
+    \item \textbf{method}: "get".
+    \item \textbf{params}: An array with the following elements:
+    \begin{myEnumerate}
+        \item \textbf{expId}: A string with the \textit{experience} identifier.
+        \item \textbf{VariablesName}: An array of strings with the name of the variables in the \textit{control program} or \textit{simulation model} whose values are going to be retrieved.
+    \end{myEnumerate}
+    \item \textbf{id}: A string with a number that indicates how many request have been sent till now, including this one.
+\end{myEnumerate}
+
+This method returns a JSON object that contains the following top-level members:
 
 \begin{myEnumerate}
     \item \textbf{jsonrpc}: "2.0"
@@ -850,7 +962,7 @@ When this method is called, the values of the \textit{control program's} or \tex
 
 \textit{Request:}
 
-The \textit{get("Test1", ["doubleout", "intout"])} RIP client method sends a POST request to: \url{http(s)://URL/RIP/POST?expId=Test1} with body:
+The \textit{get("Test1", ["doubleout", "intout"])} RIP client method sends a POST request to: \url{http(s)://BaseURL:port/RIP/POST?expId=Test1} with body:
 
 \begin{lstlisting}
 {
@@ -884,12 +996,6 @@ The RIP server responds to the POST message with the following body:
 "id": "3"
 }
 \end{lstlisting}
-
-\section{Developer Documentation}
-\label{sec:Developer_Doc}
-This section provides more details on the internal functions of the high-level API and on the low-level API, which, along with the information provided in last section for the external functions of the high-level API, is the knowledge required to either implement a new RIP client or a new RIP server, or to modify existing ones.
-
-TODO.
 
 Each method returns an error indicator when the operation is not completed successfully.
 
