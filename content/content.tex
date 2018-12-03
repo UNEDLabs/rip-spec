@@ -39,7 +39,7 @@ RIP is designed to communicate web clients with OLs; either VLs or RLs. When use
 
 Figure \ref{fig:Client-RIP-OL} shows the usage of the RIP protocol implemented in a RIP client and a RIP server to communicate a web client with an OL. The figure represents how an OL can implement either a VL, a RL, or any combination of both, each one defined as an independent \textit{experience}, referenced through a certain \textit{expId} parameter.
 
-\begin{figure}
+\begin{figure}[hb!]
 \centering
 \includegraphics[width=0.75\textwidth]{images/Client-RIP-OL.pdf}
 \caption{RIP protocol is used by a RIP client and a RIP server to communicate both. The RIP server is implemented in an OL and the RIP client is implemented in a web browser application.}
@@ -79,7 +79,7 @@ Communication between two software entities is possible when they talk the same 
 \subsection{Server Implementation Perspective}
 Figure \ref{fig:RIP_Architecture} depicts the architecture of a \emph{RIP Server} that implements the RIP protocol. To sum it up, there are three functional subsystems: the \emph{Web Server}, that handles client connections, user sessions, etc., the \emph{Command Interpreter}, that speaks RIP, and the \emph{Executor}, that controls the execution of the laboratory \textit{control programs} or \textit{simulation models}.
 
-\begin{figure}
+\begin{figure}[b!]
 \centering
 \includegraphics[width=0.75\textwidth]{images/RIPArchitecture.pdf}
 \caption{Architectural view of a RIP Server}
@@ -113,9 +113,9 @@ The internal functions are private functions, used internally by RIP server impl
 
 The external functions are client-side methods. These functions are used by the RIP clients to both get meta-data about the defined \textit{experiences} and to write and read data to and from the OL.
 
-In this way, RIP servers must implement the internal functions, while RIP clients must implement the external functions (see Figure \ref{fig:Functions_Implementation}). Client-based methods of the external functions in a RIP client communicate with the \textit{Web Server} of a RIP server, get translated by the \textit{Command Interpreter} into a series of two or more internal functions, and are finally executed by the \textit{Executor} component (see Figure \ref{fig:RIP_Architecture}).
+In this way, RIP servers must implement the internal functions, while RIP clients must implement the external functions (see Figure \ref{fig:Functions_Implementation}). Client-based methods of the external functions in a RIP client communicate with the \textit{Web Server} of a RIP server, get translated by the \textit{Command Interpreter} into a series of one or more internal functions, and are finally executed by the \textit{Executor} component (see Figure \ref{fig:RIP_Architecture}).
 
-\begin{figure}
+\begin{figure}[b!]
 \centering
 \includegraphics[width=0.75\textwidth]{images/FunctionsImplementation.pdf}
 \caption{Internal and external functions implementation in RIP clients and servers}
@@ -124,12 +124,15 @@ In this way, RIP servers must implement the internal functions, while RIP client
 
 \subsection{Internal Functions}
 \label{sec:Internal_Functions}
-The list of existing internal functions a RIP server must implement is:
+The list of internal functions a RIP server must implement is:
 
 \begin{enumerate}
+    \item \textit{info}  $=$ \textbf{basicInfo}(): Returns the list of \textit{experiences} defined in the OL and meta-data information about the method that can be used to retrieve more information about a particular \textit{experience}.
+    \item \textit{info}  $=$ \textbf{experienceInfo}(\textit{expId}): Returns the list of variables defined in the \textit{control program} or \textit{simulation model} associated to the \textit{experience} defined by \textit{expId}, meta-data related to such \textit{experience} and information about the methods that can be used to communicate with the OL.
     \item \textit{readablelist}, \textit{writablelist}  $=$ \textbf{open}(\textit{expId}): Returns the list of readable and writable variables (in two different variables) defined in the \textit{experience} associated to the input \textit{expId} parameter.
     \item \textbf{close}(\textit{expId}): Closes the control program (if it is a RL) or the simulation model (if it is a VL) of the OL \textit{experience} defined by the input \textit{expId} parameter.
-    \item \textbf{start}(\textit{expId}): Starts the execution of the \textit{control program} or \textit{simulation model} associated to the OL \textit{experience} defined by the input \textit{expId} parameter.
+    \item \textbf{start}(\textit{expId}): Starts the execution of the \textit{control program} or \textit{simulation model} associated to the OL \textit{experience} defined by the input \textit{expId} parameter by: first, opening it and second, running it.
+    \item \textbf{run}(\textit{expId}): Runs the \textit{control program} or \textit{simulation model} associated to the OL \textit{experience} defined by the input \textit{expId} parameter.
     \item \textbf{stop}(\textit{expId}): Stops the execution of the \textit{control program} or \textit{simulation model} associated to the OL \textit{experience} defined by the input \textit{expId} parameter.
     \item \textit{readvariablenames}, \textit{readvariablevalues} $=$ \textbf{get}(\textit{expId}, \textit{variablenames}): Retrieves the current values of the variables (\textit{readvariablevalues}) specified by the \textit{variablenames} input parameter. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the \textit{experience} defined by the \textit{expId} input parameter. When the \textbf{get()} method is called, \textit{readvariablenames} contains only the names of the variables that were successfully read, not all requested ones in \textit{variablenamess}.
     \item \textbf{set}(\textit{expId}, \textit{variablenames}, \textit{variablevalues}): Writes the received values (\textit{variablevalues}) in the specified variables (\textit{variablenames}) of the appropiate OL \textit{experience}. For this to happen, these variables must exist in the \textit{control program} or \textit{simulation model} associated to the (\textit{expId}) input parameter.
@@ -137,7 +140,7 @@ The list of existing internal functions a RIP server must implement is:
 
 \subsection{External Functions}
 \label{sec:External_Functions}
-The list of existing external functions a RIP server must implement so that a RIP client may use is:
+The list of external functions a RIP client must implement is:
 
 \begin{enumerate}
     \item \textit{result} $=$ \textbf{info}(\textit{expId} = null): Retrieves the meta-data information about the \textit{experience} defined by the input \textit{expId} parameter.  This parameter is optional and if it is not specified, the method then returns meta-data information about all the \textit{experiences} defined.
@@ -161,23 +164,23 @@ Three HTTP communication methods are available in RIP for communicating the clie
     \item \textbf{SSE} - To subscribe the client to data streams so that it receives server-to-client OL variables' values updates. A RIP server must implement a web service endpoint at \url{BaseURL:port/RIP/SSE} for attending these requests.
 \end{enumerate}
 
-Table \ref{tab:low-high-levels-correspondence} shows the correspondence between the external protocol functions of the high-level API and the HTTP methods of the low-level API. The right column also indicates the RIP's web server endpoint to which each of the methods and functions communicate with. A representation of these same ideas is shown in Figure \ref{fig:client-server-funtions-correspondence}.
+Table \ref{tab:low-high-levels-correspondence} shows the correspondence between the external protocol functions of the high-level API and the HTTP methods of the low-level API. The right column also indicates the RIP's web server endpoint to which each of the methods and functions communicate with. A representation of these same ideas is shown in Figure \ref{fig:client-server-funtions-correspondence}. While they should, not all internal functions are represented in the Figure; only six out of nine appear in it.
 
 \begin{table}[]
     \centering
     \begin{tabular}{c|c|c}
         \hline
-         & \\RIP client function (High-Level API) & HTTP Method (Low-Level API) & Web server endpoint \\
-         \hline
-         & \\info(), info(expId) & GET & /BaseURL:port/RIP \\
-         \hline
-         & \\set(expId, variablenames, variablevalues), & POST & /BaseURL:port/RIP/POST
-           \\get(expId, variablenames) &  & \\
+        & \\RIP client function (High-Level API) & HTTP Method (Low-Level API) & Web server endpoint \\
         \hline
-         & \\connect(expId) & SSE & /BaseURL:port/RIP/SSE \\
-         \hline
+        & \\info(), info(expId) & GET & /BaseURL:port/RIP \\
+        \hline
+        & \\set(expId, variablenames, variablevalues), & POST & /BaseURL:port/RIP/POST
+          \\get(expId, variablenames) &  & \\
+        \hline
+        & \\connect(expId) & SSE & /BaseURL:port/RIP/SSE \\
+        \hline
     \end{tabular}
-    \caption{Correspondence between RIP functions, HTTP methods and RIP's web server endpoints}
+    \caption{Correspondence between RIP external functions, HTTP methods and RIP's web server endpoints}
     \label{tab:low-high-levels-correspondence}
 \end{table}
 
@@ -188,7 +191,6 @@ RIP uses only HTTP methods for the communication. Therefore, it works in any maj
 
 \section{Design and Implementation Constraints}
 RIP is designed to only use pure HTTP methods on purpose, with the aim of guaranteeing its correct functioning from web browsers. Therefore, the only hard implementation constraint is that HTTP is used for implementing RIP communications.
-
 
 \begin{figure}
 \centering
@@ -221,7 +223,7 @@ The result returned by this method is... TODO. %Jesus - En este caso, la informa
 \subsection{Method connect}
 This method has one input parameter (\textit{expId}), for specifying the \textit{experience} the client is going to connect to.
 
-The result returned by this method is... TODO. %Jesus - Habría que explicar que las variables deben ser enlazadas antes para que se produzca la actualización de valores automática de las mismas... para esto debe existir otro método que usa el cliente rip y que también habría que llamar (en nuestra implementación de EjsS, se hace a través de una GUI, pero podría no ser así). Habría que incluir ese método como subsection aquí y en la sección 2.2.2.
+The result returned by this method is... TODO. %Jesus - Habría que explicar que las variables deben ser enlazadas antes para que se produzca la actualización de valores automática de las mismas... para esto debe existir otro método que usa el cliente rip y que también habría que llamar (en nuestra implementación de EjsS, se hace a través de una GUI, pero podría no ser así). Habría que incluir ese método como subsection aquí y en la sección 2.2.2. Otro método que creo que también deberíamos incluir es el que se usa para configurar el elemento de EjsS, donde se indica la IP del servidor y el puerto.
 
 \subsection{Method set}
 This method has three input parameters: \textit{expId}, \textit{VariablesName} and \textit{VariablesValue}.
@@ -233,7 +235,7 @@ The result returned by this method is... TODO. %Jesus - ¿Qué devuelve el méto
 \subsection{Method get}
 This method has two input parameters: \textit{expId} and \textit{VariablesName}.
 
-When this method is called, the values of the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName} are returned in a JSON object. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter.
+When this method is called, the values of the \textit{control program's} or \textit{simulation model's} variables named as the strings in \textit{VariablesName} are read and returned. The \textit{control program} or \textit{simulation model} is determined with the \textit{expId} parameter.
 
 The result returned by this method is... TODO. %Jesus - ¿Qué devuelve el método rip.get() de EjsS exactamente?
 
@@ -242,28 +244,103 @@ The result returned by this method is... TODO. %Jesus - ¿Qué devuelve el méto
 This section provides more details on the internal functions of the high-level API and on the low-level API, which represents the knowledge required to either implement a new RIP client or a new RIP server, or to modify existing ones.
 
 \subsection{Internal Functions of the High-Level API}
-TODO. %Dictino - Entre otras cosas, habría que mencionar cómo se usan estos métodos según qué external function se haya recibido. Por ejemplo, si se ha recibido el info(), supongo que se usarían tres métodos: 1. open, 2. get, 3. close. Si lo pones por escrito, puedo preparar también una tablita o dibujito que lo ilustre.
+The High-Level API internal functions are run in the RIP server upon the reception of a GET or POST message, or when an SSE connection is established, mostly. Table \ref{tab:internal-external-correspondence} shows the correspondence between the external function called by the client and the internal function executed at the server.
 
-\subsubsection{Method open}
-TODO. %Dictino
+\begin{table}[b!]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        & \\RIP (client) external function & RIP (server) internal functions \\
+        \hline
+        & \\info() & basicInfo() \\
+        \hline
+        & \\info(expId) & experienceInfo() \\
+        \hline
+        & \\connect(expId) & 1. - start(), 2. - get() \\
+        \hline
+        & \\set(expId, VariablesName, VariablesValue) & set() \\
+        \hline
+        & \\get(expId, VariablesName) & get() \\
+        \hline
+    \end{tabular}
+    \caption{Correspondence between RIP external functions and RIP internal functions}
+    \label{tab:internal-external-correspondence}
+\end{table}
 
-\subsubsection{Method close}
-TODO. %Dictino
+However, the execution of some internal functions are not fired due to the reception of an external function in the RIP server. On the contrary, some internal functions are run when a client disconnection is detected (that's the case of the \textit{stop()} and \textit{close()} methods), or when other internal functions are called (\textit{open()} and \textit{run()} methods). Table summarizes this information.
+
+\begin{table}[b!]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        & \\Trigger condition & Executed RIP (server) internal functions \\
+        \hline
+        & \\experienceInfo() is run & 1. - [open()], 2. - get(), 3. - [close()] \\
+        \hline
+        & \\start() is run & 1 . - [open()], 2. - [run()] \\
+        \hline
+        & \\Client disconnects & 1. - [stop()], 2. - [close()] \\
+        \hline
+    \end{tabular}
+    \caption{Triggering conditions and fired internal method}
+    \label{tab:trigerring-internal-correspondence}
+\end{table}
+
+Functions between brackets in Table \ref{tab:trigerring-internal-correspondence} are not necessarily run, and only get executed when needed.
+
+As can be seen in Tables \ref{tab:internal-external-correspondence} and \ref{tab:trigerring-internal-correspondence}, the \textit{get()} internal function can be either run upon a client function reception (\textit{connect(expId)} and \textit{get(expId, VariablesName)}) or due to the execution of the \textit{experienceInfo()} internal method. 
+
+\subsubsection{Method basicInfo}
+This method is called only when the RIP server receives an HTTP message from a client with the \textit{info} method and no parameters.
+
+It returns a list of \textit{experiences} defined in the OL and meta-data information about the GET HTTP RIP method described in previous sections to get meta-data.
+
+\subsubsection{Method experienceInfo}
+This method is called only when the RIP server receives an HTTP message from a client with the \textit{info} method and the \textit{expId} parameter.
+
+It returns meta-data information about the \textit{experience} and the available HTTP RIP methods described in previous sections to communicate with the OL.
 
 \subsubsection{Method start}
-TODO. %Dictino
+This method is called only when the RIP server receives an HTTP message from a client with the \textit{connect} method and the \textit{expId} parameter.
+
+It runs (when needed) two internal functions in order: first, \textit{open()} and second, \textit{run()}, to open and run the \textit{control program} or \textit{simulation model} associated to the experience, respectively.
+
+\subsubsection{Method open}
+This method is run only when either the experienceInfo() or the start() methods are called in the RIP server and there are no other clients using the associated \textit{experience}, which means the corresponding \textit{control program} or \textit{simulation model} is closed.
+
+It opens the \textit{control program} or \textit{simulation model} associated to the experience.
+
+\subsubsection{Method close}
+This method is run either when a client disconnection is produced, with the objective of closing the \textit{control program} or \textit{simulations model} that was open to attend the client requests, or when the experienceInfo() method is called and there are no other clients using the associated \textit{experience}.
+
+It closes the \textit{control program} or \textit{simulation model} associated to the experience.
+
+\subsubsection{Method run}
+This method is run only when either the start() method is called in the RIP server and there are no other clients using the associated \textit{experience}, which means the corresponding \textit{control program} or \textit{simulation model} is not currently running.
+
+It runs the \textit{control program} or \textit{simulation model} associated to the experience.
 
 \subsubsection{Method stop}
-TODO. %Dictino
+This method is only run when a client disconnection is produced, with the objective of stopping the execution of the \textit{control program}, or \textit{simulations model} that was running to attend the client requests. 
+
+It stops the \textit{control program} or \textit{simulation model} associated to the experience.
 
 \subsubsection{Method get}
-TODO. %Dictino
+This method is called only when the RIP server receives an HTTP message from a client with the \textit{get} method and the \textit{expId} and \textit{VariablesName} parameters.
+
+It returns the list of current values of the variables defined in the \textit{control program} or {simulation model} and the names of the read variables.
 
 \subsubsection{Method set}
-TODO. %Dictino
+This method is called only when the RIP server receives an HTTP message from a client with the \textit{set} method and the \textit{expId}, \textit{VariablesName} and \textit{VariablesValue} parameters.
+
+It writes the values received in the specified variables of the appropiate OL \textit{experience}.
+
+Each method returns an error indicator when the operation is not completed successfully.
+
+At the moment, only numbers, text and booleans are supported as valid types for \textit{variablevalues} and \textit{readvariablevalues} in the \textbf{set}() and \textbf{get}() methods, respectively.
 
 \subsection{Low-Level API}
-Each method from the High-Level API is implemented with an HTTP method that follows the Low-Level API. The nature and structure of the HTTP messages that must be built by each High-Level API method, the RIP server endpoint to which it must connect, and the result returned by the RIP server to each of these messages is given in this section.
+Each external method from the High-Level API is implemented with an HTTP method that follows the Low-Level API. The nature and structure of the HTTP messages that must be built by each High-Level API method, the RIP server endpoint to which it must connect, and the result returned by the RIP server to each of these messages is given in this section.
 
 For the sake of clarity, each method also includes an example. The relevant parameters for this example can be found in Table \ref{tab:low-level-example}.
 
@@ -710,8 +787,8 @@ The RIP server responds to the GET message with the following body:
                "name": "intin",
                "description": "Integer input",
                "type": "int",
-               "min": "-2147483648",
-               "max": "2147483647",
+               "min": "-20",
+               "max": "10",
                "precision":"1"
                },
                {
@@ -832,13 +909,13 @@ When this method is called, an SSE communication is established with the RIP ser
     \item \textbf{retry}: A number specifying the time (in miliseconds) to wait before the client tries to automatically reconnect to the SSE. This field appear only once per connection.
     \item \textbf{event}: The name of the event that follows
     \item \textbf{id}: A unique number that identifies the event.
-    \item \textbf{data}: A JSON object with the following top-level members:
+    \item \textbf{data}: A JSON object with just one top-level members:
     \begin{myEnumerate}
-        \item \textbf{data}: An array with the following elements:
+        \item \textbf{result}: An array with the following elements:
         \begin{myEnumerate}
-        \item \textbf{VariablesName}: An array of strings with the names of the retrieved variables.
-        \item \textbf{VariablesValue}: A mixed array with the values of the retrieved variables.
-    \end{myEnumerate}
+            \item \textbf{VariablesName}: An array of strings with the names of the retrieved variables.
+            \item \textbf{VariablesValue}: A mixed array with the values of the retrieved variables.
+        \end{myEnumerate}
     \end{myEnumerate}
 \end{myEnumerate}
 
@@ -996,10 +1073,6 @@ The RIP server responds to the POST message with the following body:
 "id": "3"
 }
 \end{lstlisting}
-
-Each method returns an error indicator when the operation is not completed successfully.
-
-At the moment, only numbers, text and booleans are supported as valid types for \textit{variablevalues} and \textit{readvariablevalues} in the \textbf{set}() and \textbf{get}() methods, respectively.
 
 
 \chapter{External Interface Requirements}
