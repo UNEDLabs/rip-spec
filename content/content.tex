@@ -170,16 +170,15 @@ Table \ref{tab:low-high-levels-correspondence} shows the correspondence between 
 
 \begin{table}[]
     \centering
-    \begin{tabular}{c|c|c}
+    \begin{tabular}{|c|c|c|}
         \hline
-        & \\RIP client function (High-Level API) & HTTP Method (Low-Level API) & Web server endpoint \\
+        RIP client function (High-Level API) & \begin{tabular}{@{}c@{}} HTTP Method \\ (Low-Level API) \end{tabular} & Web server endpoint \\
         \hline
-        & \\info(callback), info(callback, expId) & GET & /BaseURL:port/RIP \\
+        info(callback), info(callback, expId) & GET & /BaseURL:port/RIP \\
         \hline
-        & \\set(variableNames, variableValues, callback, expId), & POST & /BaseURL:port/RIP/POST
-          \\get(variableNames, expId) &  & \\
+        \begin{tabular}{@{}c@{}} set(variableNames, variableValues, callback, expId), \\ get(variableNames, expId)\end{tabular} & POST & /BaseURL:port/RIP/POST \\
         \hline
-        & \\connect(expId, callback) & SSE & /BaseURL:port/RIP/SSE \\
+        connect(expId, callback) & SSE & /BaseURL:port/RIP/SSE \\
         \hline
     \end{tabular}
     \caption{Correspondence between RIP external functions, HTTP methods and RIP's web server endpoints}
@@ -194,7 +193,7 @@ RIP uses only HTTP methods for the communication. Therefore, it works in any maj
 \section{Design and Implementation Constraints}
 RIP is designed to only use pure HTTP methods on purpose, with the aim of guaranteeing its correct functioning from web browsers. Therefore, the only hard implementation constraint is that HTTP is used for implementing RIP communications.
 
-\begin{figure}
+\begin{figure}[ht!]
 \centering
 \includegraphics[width=\textwidth]{images/Correspondence.pdf}
 \caption{Illustration of the existing correspondence between RIP functions, HTTP methods and RIP's web server endpoints}
@@ -209,7 +208,7 @@ RIP server implementations may differ a lot depending on the language used to ma
 
 \section{User Documentation}
 \label{sec:User_Doc}
-This section provides a deeper insight on the external functions of the high-level API from a final user point of view. This is the only knowledge required by such a user to use a RIP client implementation to communicate with an OL running a RIP server.
+This section provides a deeper insight on the \textbf{external functions of the high-level API} from a final user point of view. This is the only knowledge required by such a user to use a RIP client implementation to communicate with an OL running a RIP server.
 
 A RIP client must implement a class with the methods described in Section \ref{sec:External_Functions}. Next, detailed information of each of them is given. This information includes a description of: 1) the method itself, 2) its input parameters and 3) the result returned by the method. All methods have a \textit{callback} parameter; a function to be called after the method completes its tasks.
 
@@ -231,7 +230,7 @@ This method has two input parameters: \textit{expId} and \textit{callback}.
 
 When this method is called, the client connects to an SSE in the RIP server to: 1) control the user session in the server and 2) receive updates of the variables value in the \textit{experience} defined by \textit{expId}.
 
-This method returns nothing and the way to call it is: 
+Although updates on the server's variables values are received upon the connection, this method returns nothing by itself. The way to call it is: 
 
 \textbf{connect}(\textit{expId}, \textit{callback})
 
@@ -270,7 +269,7 @@ The High-Level API internal functions are run in the RIP server upon the recepti
         \hline
         & \\info(callback, expId) & experienceInfo() \\
         \hline
-        & \\connect(expId, callback) & 1. - start(), 2. - get() \\
+        & \\connect(expId, callback) & 1. - start(), 2. - get()_{\CircArrowRight{}} \\
         \hline
         & \\set(variableNames, variableValues, callback, expId) & set() \\
         \hline
@@ -302,7 +301,7 @@ However, the execution of some internal functions are not fired due to the recep
 
 Functions between brackets in Table \ref{tab:trigerring-internal-correspondence} are not necessarily run, and only get executed when needed.
 
-As can be seen in Tables \ref{tab:internal-external-correspondence} and \ref{tab:trigerring-internal-correspondence}, the \textit{get()} internal function can be either run upon a client function reception (\textit{connect(expId)} and \textit{get(expId, variableNames)}) or due to the execution of the \textit{experienceInfo()} internal method. 
+As can be seen in Tables \ref{tab:internal-external-correspondence} and \ref{tab:trigerring-internal-correspondence}, the \textit{get()} internal function can be either run upon a client function reception (\textit{connect(expId)} and \textit{get(expId, variableNames)}) or due to the execution of the \textit{experienceInfo()} internal method. When the client invokes the \textit{connect(expId)} external function, the RIP server runs the \textit{get()} internal function in a loop to get, and then send, constant updates to the client through the established SSE connection.
 
 Each method returns an error indicator when the operation is not completed successfully.
 
@@ -916,7 +915,7 @@ The RIP server responds to the GET message with the following body:
 \subsubsection{Method connect - SSE}
 The \textit{connect(expIdValue, callback)} RIP client method establishes an SSE connection with: \url{http(s)://BaseURL:port/RIP/SSE?expId=expIdValue}.
 
-When this method is called, an SSE communication is established with the RIP server. The result is a stream of data (which periodicity or aperiodicity is defined in the server) that can be captured by the onmessage() and the addEventListener() methods of the EventSource object, for example \cite{eventsource}. The structure of the data obtained through the established SSE follows the SSE standard:
+When this method is called, an SSE communication is established with the RIP server. The result is a stream of data (which periodicity or aperiodicity is defined in the server) that can be captured by the onmessage() and the addEventListener() methods of the EventSource object, for example \cite{sse}. The structure of the data obtained through the established SSE follows the SSE standard:
 
 \begin{myEnumerate}
     \item \textbf{retry}: A number specifying the time (in miliseconds) to wait before the client tries to automatically reconnect to the SSE. This field appear only once per connection.
@@ -1091,38 +1090,59 @@ The RIP server responds to the POST message with the following body:
 \chapter{Protocol Features}
 \label{System Features}
 
+This chapter describes the main features of RIP. Some features are client-based while others are server-based. This is specified everytime a new features is presented.
+
 \section{Defining Experiences}
-RIP supports the definition of different experiences within a server. Experiences can be all associated to just one OL or to different ones. An experience gets defined by the next required data:
+This is a server-based feature. RIP supports the definition of different experiences within a server. Experiences can be all associated to just one OL or to different ones. An experience gets defined by the next required data:
 
 \begin{enumerate}
-    \item \textbf{Control program or simulation model}: Each OL experience requires the \textit{control program} or \textit{simulation model} handles the connection to the hardware, in case of a RL, or that computes the mathematical model of the system, in case of a VL.
+    \item \textbf{Control program or simulation model}: Each OL experience requires the \textit{control program} or \textit{simulation model} that handles the connection to the hardware, in case of a RL, or that computes the mathematical model of the system, in case of a VL.
     \item \textbf{Path to control program or simulation model}: All experiences must define the path to the \textit{control program} or \textit{simulation model} within the machine that hosts the RIP server.
-    \item \textbf{Experience identifier (expId)}: The experience id, or \textit{expId}, unequivocally identify all experiences defined in the RIP server.
-    \item \textbf{Authors}: [Optional] Experiences may include a list of authors.
-    \item \textbf{Keywords}: [Optional] Experiences may include a list of related terms or keywords.
-    \item \textbf{Description}: [Optional] Experiences may include a description that gives more information about the experience objectives, tasks and so on.
-    %\item \textbf{Cameras}:
+    \item \textbf{Experience identifier (expId)}: The experience id, or \textit{expId}, unequivocally identifies a particular experience defined in the RIP server.
+\end{enumerate}
+
+Additionally, the next optional data can also be provided for each experience:
+
+\begin{enumerate}
+    \item \textbf{Authors}: Experiences may include a list of authors. When not specified, this information is sent as an empty string.
+    \item \textbf{Keywords}: Experiences may include a list of related terms or keywords. When not specified, this information is sent as an empty string.
+    \item \textbf{Description}: Experiences may include a description that gives more information about the experience objectives, possible experimental tasks and so on. When not specified, this information is sent as an empty string.
+    \item \textbf{Cameras}: Experiences may include a list of accessible URLs that stream the video grabbed by the associated cameras.
 \end{enumerate}
 
 \section{Obtaining Meta-data}
+This is a client-based feature. 
+
 TODO
 
 \section{Obtaining Readable and Writable Variables}
+This is a client-based feature. 
+
 TODO
 
 \section{Obtaining Interface Methods}
+This is a client-based feature. 
+
 TODO
 
 \section{Invoking Interface Methods to Read and Write Variables}
+This is a client-based feature. 
+
 TODO
 
 \section{Concurrent Multi-user Connection}
+This is a client-based feature. 
+
 TODO
 
 \section{Defining Server Events}
+This is a server-based feature. 
+
 TODO
 
 \section{Subscribing to Server Events}
+This is a client-based feature. 
+
 TODO
 
 
