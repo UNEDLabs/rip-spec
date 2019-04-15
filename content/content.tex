@@ -913,6 +913,7 @@ The RIP server responds to the GET message with the following body:
 \end{lstlisting}
 
 \subsubsection{Method connect - SSE}
+\label{sec:connect}
 The \textit{connect(expIdValue, callback)} RIP client method establishes an SSE connection with: \url{http(s)://BaseURL:port/RIP/SSE?expId=expIdValue}.
 
 When this method is called, an SSE communication is established with the RIP server. The result is a stream of data (which periodicity or aperiodicity is defined in the server) that can be captured by the onmessage() and the addEventListener() methods of the EventSource object, for example \cite{sse}. The structure of the data obtained through the established SSE follows the SSE standard:
@@ -968,6 +969,7 @@ data:
 A RIP client implementation must automatically capture these events and assign the received values to their corresponding variables in the client side.
 
 \subsubsection{Method set - POST}
+\label{sec:set}
 The \textit{set(variableNames, variableValues, callback, expIdValue)} RIP client method sends a POST request to: \url{http(s)://BaseURL:port/RIP/POST?expId=expIdValue} with a JSON body with the following top-level members:
 
 \begin{myEnumerate}
@@ -1090,9 +1092,9 @@ The RIP server responds to the POST message with the following body:
 \chapter{Protocol Features}
 \label{System Features}
 
-This chapter describes the main features of RIP. Some features are client-based while others are server-based. This is specified everytime a new features is presented.
+This chapter describes the main features of RIP. Some features are client-based while others are server-based. This is specified every time a new features is presented.
 
-\section{Defining Experiences}
+\section{Defining Experiences and Meta-data}
 This is a server-based feature. RIP supports the definition of different experiences within a server. Experiences can be all associated to just one OL or to different ones. An experience gets defined by the next required data:
 
 \begin{enumerate}
@@ -1101,7 +1103,7 @@ This is a server-based feature. RIP supports the definition of different experie
     \item \textbf{Experience identifier (expId)}: The experience id, or \textit{expId}, unequivocally identifies a particular experience defined in the RIP server.
 \end{enumerate}
 
-Additionally, the next optional data can also be provided for each experience:
+Additionally, the next optional meta-data can also be provided for each experience:
 
 \begin{enumerate}
     \item \textbf{Authors}: Experiences may include a list of authors. When not specified, this information is sent as an empty string.
@@ -1110,30 +1112,38 @@ Additionally, the next optional data can also be provided for each experience:
     \item \textbf{Cameras}: Experiences may include a list of accessible URLs that stream the video grabbed by the associated cameras.
 \end{enumerate}
 
+\section{Defining Readable and Writable Variables}
+This is a server-based feature. The RIP server implementation has a list of fully defined readable and writable variables from the control program or simulation model associated to each defined experience. In this context, we understand a variable is fully defined when is provides the following information:
+
+\begin{itemize}
+    \item \textbf{Name}: The name of the variable.
+    \item \textbf{Nature}: Whether it is a readable or a writable variable or both.
+    \item \textbf{Description}: A brief description about the variable purpose/meaning.
+    \item \textbf{Type}: Whether the variable is a boolean, a number, a string or an array.
+    \item \textbf{Min value}: The minimum value the variable can take. In case of boolean variables, \textit{"false"}; in case of string variables, \textit{""}; in any other case, any number in string format.
+    \item \textbf{Max value}: The maximum value the variable can take. In case of boolean variables, \textit{"true"}; in case of string variables, \textit{""}; in any other case, any number in string format.
+    \item \textbf{Precision}: The minimum increase/decrease in which the values of the variable can be modified. In case of boolean or string variables, \textit{""}; in any other case, any number in string format.
+\end{itemize}
+
+Ideally, and if the control programs/simulation models allow it, the RIP server implementation will build the list of fully defined variables automatically. This may depend on the the features offered by the control programs and simulation models. If this list cannot be built automatically by the RIP server, then it must provide a way to allow a human user to create such list for each control program or simulation model that requires it.
+
 \section{Obtaining Meta-data}
-This is a client-based feature. 
+This is a client-based feature. There are two levels of meta-data a client can obtain from a RIP server:
 
-TODO
+\begin{itemize}
+    \item \textbf{General}: The client retrieves information about the experiences defined in the RIP server and the available method to get more information about them. This was presented in Section \ref{sec:info}, when the GET method is called without parameters.
+    \item \textbf{Related to an experience}: The client retrieves information about the input and output variables (defined in the "Defining Readable and Writable Variables" server-based feature). It also gets the meta-data associated to that experience (defined in the "Defining Experiences and Meta-data" server-based feature). Finally the client also obtains information about the built-in interface methods, provided by RIP, it can call to communicate with the OL. This was presented in Section \ref{sec:info}, when the GET method is called with the \textit{expId} parameter.
+\end{itemize}
 
-\section{Obtaining Readable and Writable Variables}
-This is a client-based feature. 
-
-TODO
-
-\section{Obtaining Interface Methods}
-This is a client-based feature. 
-
-TODO
-
-\section{Invoking Interface Methods to Read and Write Variables}
-This is a client-based feature. 
-
-TODO
+\section{Reading Readable Variables and Writing Writable Variables}
+This is a client-based feature. It allows a client to use RIP's built-in interface methods to read and write variables from/to the control programs and simulation models. It was presented in Sections \ref{sec:set} (for writable variables) and \ref{sec:connect} (for readable ones).
 
 \section{Concurrent Multi-user Connection}
-This is a client-based feature. 
+This is a client-based feature. RIP communication methods (POST and SSE) allow multiple clients to send and receive data from the OLs at the same time. The server does not store any state about the client session on the server side that could prevent on a new user to send and/or receive data.
 
-TODO
+In particular, any number of clients can connect to the SSE to receive updates on an OL's variables simultaneously. POST messages received from clients wanting to write a value in a variable are processed in a first-in, first-out basis.
+
+Any session control, aside from detecting client connections and disconnections to and from the SSE, must be done outside RIP.
 
 \section{Defining Server Events}
 This is a server-based feature. 
