@@ -11,4 +11,4 @@ Python - https://github.com/UNEDLabs/rip-python-server
 
 Client implementations:
 
-RIP element in EjsS - https://www.um.es/fem/EjsWiki/Main/Download
+RIP element in EjsS - https://gitlab.com/ejss/tool
