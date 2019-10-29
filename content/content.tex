@@ -1097,23 +1097,23 @@ This chapter describes the main features of RIP. Some features are client-based 
 \section{Defining Experiences and Meta-data}
 This is a server-based feature. RIP supports the definition of different experiences within a server. Experiences can be all associated to just one OL or to different ones. An experience gets defined by the next required data:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Control program or simulation model}: Each OL experience requires the \textit{control program} or \textit{simulation model} that handles the connection to the hardware, in case of a RL, or that computes the mathematical model of the system, in case of a VL.
     \item \textbf{Path to control program or simulation model}: All experiences must define the path to the \textit{control program} or \textit{simulation model} within the machine that hosts the RIP server.
     \item \textbf{Experience identifier (expId)}: The experience id, or \textit{expId}, unequivocally identifies a particular experience defined in the RIP server.
-\end{enumerate}
+\end{itemize}
 
 Additionally, the next optional meta-data can also be provided for each experience:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Authors}: Experiences may include a list of authors. When not specified, this information is sent as an empty string.
     \item \textbf{Keywords}: Experiences may include a list of related terms or keywords. When not specified, this information is sent as an empty string.
     \item \textbf{Description}: Experiences may include a description that gives more information about the experience objectives, possible experimental tasks and so on. When not specified, this information is sent as an empty string.
     \item \textbf{Cameras}: Experiences may include a list of accessible URLs that stream the video grabbed by the associated cameras.
-\end{enumerate}
+\end{itemize}
 
 \section{Defining Readable and Writable Variables}
-This is a server-based feature. The RIP server implementation has a list of fully defined readable and writable variables from the control program or simulation model associated to each defined experience. In this context, we understand a variable is fully defined when is provides the following information:
+This is a server-based feature. The RIP server implementation has a list of fully defined readable and writable variables from the control program or simulation model associated to each defined experience. In this context, we understand a variable is fully defined when it provides the following information:
 
 \begin{itemize}
     \item \textbf{Name}: The name of the variable.
@@ -1145,28 +1145,96 @@ In particular, any number of clients can connect to the SSE to receive updates o
 
 Any session control, aside from detecting client connections and disconnections to and from the SSE, must be done outside RIP.
 
-\section{Defining Server Events}
-This is a server-based feature. 
+\section{Defining and Subscribing to Server Events}
+The communication protocol needs to consider two equally important aspects: the definition of the triggering conditions that fire an event in the server and the subscription to the produced event streams. Indeed, a certain client user may be interested in subscribing only to a subset of the event streams produced by one or more already defined event triggers, a second client user could need to subscribe to a different subset to carry out its operations, and a third client user may need to define new event triggers to properly work.
 
-TODO
+\begin{figure}[b!]
+\begin{center}
+\centering
+\includegraphics[width=0.8\columnwidth]{images/workflow_global.pdf}
+\caption{Global communication workflow in RIP for event subscription and definition. [POST-r] means a new POST request is issued from the client to the server and [POST-a] indicates that the server answers to the last received POST request.}
+\label{fig:global_workflow}
+\end{center}
+\end{figure}
 
-\section{Subscribing to Server Events}
+The global communication workflow (see Figure \ref{fig:global_workflow}) is as follows:
+
+\begin{enumerate}
+	\item The client application sends a POST request to ask the server about the already defined event triggers (which can may have been defined either by the communication protocol implementation or by the plant owner/expert, as it is described in the next subsection). 
+	\item The server answers with the information, containing all relevant data associated to each defined rule: name, author, description and a list of the parameters that need to be set. 
+	\item The client user decides whether to define a new event trigger or not.
+	\item The client user decides which event streams to subscribe to, including those produced by event triggers defined by the RIP communication protocol implementation, the plant owner/expert and those defined by himself. If some parameters need to be configured with values (for instance, $\delta$, in the send-on-delta strategy example presented in the next subsection), the client sets them in this step.
+\end{enumerate}
+
+\subsection{Defining Server Events}
+The RIP specification considers three actors who can define server events: 1) the OL owner/provider, 2) the RIP specification itself and 3) the OL user. For the first two actors, this is a server-based feature. For the last one, this feature requires implementation in both the server and the client. Figure \ref{fig:actors} provides more details.
+
+\begin{figure}[b!]
+\begin{center}
+\centering
+\includegraphics[width=\columnwidth]{images/actors.pdf}
+\caption{Actors that can play a role in defining event triggers: the plant owner/expert (who usually does the deployment of the system on the Internet), the client user (who uses the client application to control the plant) and the RIP communication protocol (CP) implementation itself, formed by both the RIP client implementation (CI) and the RIP server implementation (SI). Rules that define the event triggers are written in the \textit{triggers configuration file}, which can be edited by any of the three actors.}
+\label{fig:actors}
+\end{center}
+\end{figure}
+
+While supporting three different actors to define event triggers may look redundant, each case presents its own advantages and disadvantages. This document will use the send-on-delta strategy as an event triggering condition example to illustrate the way each of the actors could define and implement it. While a detailed description of this technique can be found in the literature, for the purpose of this document it is enough to say that it relies on sending data every time the error of a controlled variable is bigger than a certain $\delta$ value. In mathematical form, and following the notation in Figure \ref{fig:actors}, data is sent to the client when:
+
+\begin{equation}
+e(t) = |y_{ref}(t) - y(t)| > \delta
+\label{eq:send-on-delta}
+\end{equation}
+
+\begin{enumerate}
+	\item \textit{Event triggers included by the RIP SSE-based communication protocol implementation.} Any implementation of the proposed communication protocol must: 1) send the client signals to the plant and 2) send the output of the plant to the client. This information can be used by the RIP communication protocol implementation to check and determine if certain conditions are met to decide whether to send data (trigger the event) to the client or not. These built-in event triggers would only include parameterizable basic types of well-known event triggering conditions that require little insight of the process itself. The main advantage of letting RIP to include the definition of some general events is that neither the plant expert nor the user need to do it, saving time and work in many applications. Instead, only the parameters that affect the event trigger must be set, either by the plant expert or by the client user. This is the way any of these two actors provide its knowledge to the process control. In the example of the send-on-delta strategy, the logic to send data when Equation \ref{eq:send-on-delta} is satisfied, would already be written in the RIP communication protocol implementation, ready to be used by any plant and client without any extra work rather than setting the value of $\delta$ in the triggers configuration file.
+	\item \textit{Event triggers defined by the plant expert.} The RIP communication protocol implementation may not include an event trigger strategy that suits the needs of an specific OL, plant or process. In this case, the expert/owner of such system can easily define its own rules so that the communication protocol understands them and use them for triggering the events that send the data to the client. The main advantage of this approach is that it provides the communication protocol with a great flexibility to support very specific and specialized event triggering conditions, allowing the expert/owner of the system to define the strategy that works best with the plant. The disadvantage is that it requires more work than just tuning the parameters of built-in event triggers. In the example of the send-on-delta strategy, the system expert/owner would need to write Equation \ref{eq:send-on-delta} in the triggers configuration file, as well as set the value for the $\delta$ parameter.
+	\item \textit{Event triggers defined by the client user.} It is easy to imagine scenarios in which it is interesting to allow a client user to define her own event triggering conditions. The first one is in the context of educational OLs where part of the learning practice is to make the student decide and implement the event trigger strategy. A second one is when neither the communication protocol implementation nor the plant owner/expert provide any event trigger on their own. The greatest advantage of this option is that any user can define its own event triggering rules, whether the communication protocol implementation or the plant expert/owner have include any or not. This allows the greatest flexibility but the cost is that it requires more knowledge from the client. In the example of the send-on-delta strategy, and end user would write Equation \ref{eq:send-on-delta} in the web application and RIP would send it to the server where this rule would be written into the triggers configuration file.
+\end{enumerate}
+
+Writing the event triggering conditions in the triggers configuration file can be done in two different ways, depending on the actor. When the plant owner/expert is defining her own rules or just setting the value of built-in triggers' parameters, the best option is that the RIP server implementation provides an editor interface to read and write the file. For supporting client users to define these rules or set the parameters of existing ones, RIP provides this feature as a web service. This is described in the next subsection.
+
+\begin{figure}[b!]
+\begin{center}
+\centering
+\includegraphics[width=0.4\columnwidth]{images/workflow_define.pdf}
+\caption{Communication workflow for a client that defines a new event trigger. [POST-r] means a new POST request is issued from the client to the server and [POST-a] indicates that the server answers to the last received POST request.}
+\label{fig:define_workflow}
+\end{center}
+\end{figure}
+
+The communication workflow for a client user to define event triggers is as follows (see Figure \ref{fig:define_workflow}):
+
+\begin{enumerate}
+	\item The client user indicates in the client application that a new event trigger is being defined. 
+	\item Through the communication protocol, the client application fires a POST request to the server.
+	\item The server answers with the name of the programming language in which the event triggering condition must be written.
+	\item The client user writes the triggering rule, including its possible parameters.
+	\item The client application, through the communication protocol, sends a new POST request to the server with this information.
+	\item The server writes the rule in the triggers configuration file.
+	\item The server responds to the client to let it know that it can start the parameterization and subscription request.
+\end{enumerate}
+
+\subsection{Subscribing to Server Events}
 This is a client-based feature. 
 
-TODO
+\begin{figure}[b!]
+\begin{center}
+\centering
+\includegraphics[width=0.4\columnwidth]{images/workflow_subscribe.pdf}
+\caption{Communication workflow for a client that sets the parameters of an event trigger and subscribes to its event stream. [POST-r] means a new POST request is issued from the client to the server and [POST-a] indicates that the server answers to the last received POST request.}
+\label{fig:subscribe_workflow}
+\end{center}
+\end{figure}
 
+The communication workflow for a client user to subscribe to a certain subset of event streams and set values for the required parameters is as follows (see Figure \ref{fig:subscribe_workflow}):
 
-\chapter{External Interface Requirements}
-\label{External Interface Requirements}
+\begin{enumerate}
+	\item The client user selects which events is going to subscribe to and writes the values for the associated parameters. 
+	\item The client application, through the communication protocol, fires a POST request to the server with the list of selected event streams and the values of the parameters.
+	\item The server answers to let know the client application that everything is settled and that the control of the process can start.
+\end{enumerate}
 
-\section{User Interfaces}
-TODO
-
-\section{Software Interfaces}
-TODO
-
-\section{Communications Interfaces}
-TODO
+After the process is finished, the communication protocol implementation configures the SSE so that only the subscribed events, triggered by the selected triggering conditions, are received by the client. For simplicity, this work has considered that all even streams would contain the same information; for example, the output of the plant and its state. However, the proposed communication protocol can be easily extended to allow the three actors to also define the information each event stream could contain. For example, an event stream created by a certain event trigger, \textit{A}, may send to the client only the output of the plant, while the event stream produced by a different event trigger, \textit{B}, may send the whole state of the plant.
 
 
 \begin{appendices}
@@ -1187,10 +1255,6 @@ TODO
 \textbf{SSE -} Server-sent events.
 
 \textbf{VL -} Virtual laboratory.
-
-
-\chapter{Analysis Models}
-TODO
 
 \end{appendices}
 

@@ -59,6 +59,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Java --> latex 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{stackengine,amssymb,graphicx,scalerel}
+\newcommand\CircArrowRight[1]{\stackengine{-.3ex}{\scalebox{.8}{#1}}{\CAR}{O}{c}{F}{F}{L}}
+\newcommand\CAR{\scaleto{\circlearrowright}{3ex}}
 \usepackage{listings}
 \usepackage{color}
 \definecolor{pblue}{rgb}{0.13,0.13,1}
