@@ -946,7 +946,7 @@ The RIP server responds with a stream of data that follows this format:
 retry: 2000
 
 event: periodiclabdata
-id: 1
+id: 200
 data: 
 {
 "result": [
@@ -965,6 +965,8 @@ data:
           ]
 }
 \end{lstlisting}
+
+Where \textit{event} defines the name of the event stream the client can subscribe to and \textit{id} is a unique identifier for that particular \textit{event}. In RIP, the \textit{id} is set to be the time in miliseconds since the client first connected to the server.
 
 A RIP client implementation must automatically capture these events and assign the received values to their corresponding variables in the client side.
 
@@ -1146,7 +1148,7 @@ In particular, any number of clients can connect to the SSE to receive updates o
 Any session control, aside from detecting client connections and disconnections to and from the SSE, must be done outside RIP.
 
 \section{Defining and Subscribing to Server Events}
-The communication protocol needs to consider two equally important aspects: the definition of the triggering conditions that fire an event in the server and the subscription to the produced event streams. Indeed, a certain client user may be interested in subscribing only to a subset of the event streams produced by one or more already defined event triggers, a second client user could need to subscribe to a different subset to carry out its operations, and a third client user may need to define new event triggers to properly work.
+The communication protocol needs to consider two equally important aspects: the definition of the triggering conditions that fire an event in the SSE in the server and the subscription to the produced SSE event streams. Indeed, a certain client user may be interested in subscribing only to a subset of the event streams produced by one or more already defined event triggers, a second client user could need to subscribe to a different subset to carry out its operations, and a third client user may need to define new event triggers to properly work.
 
 \begin{figure}[b!]
 \begin{center}
@@ -1236,10 +1238,23 @@ The communication workflow for a client user to subscribe to a certain subset of
 
 After the process is finished, the communication protocol implementation configures the SSE so that only the subscribed events, triggered by the selected triggering conditions, are received by the client. For simplicity, this work has considered that all even streams would contain the same information; for example, the output of the plant and its state. However, the proposed communication protocol can be easily extended to allow the three actors to also define the information each event stream could contain. For example, an event stream created by a certain event trigger, \textit{A}, may send to the client only the output of the plant, while the event stream produced by a different event trigger, \textit{B}, may send the whole state of the plant.
 
+\subsection{Built-in Event Triggering Conditions}
+As mentioned before, RIP can include, and and actually does, several event triggers that are predefined. These triggering conditions can be either used or ignored, depending on the configuration in the RIP server implementation and on the choices made by the end user.
+
+Available built-in or predefined triggering conditions are:
+
+\begin{enumerate}
+	\item \textit{Periodiclabdata}. The first time this event is fired is upon the client connection to the server. Then, this event is triggered on a periodic basis, every time \textit{t} milliseconds have passed since the client connected to the server. When fired, this event sends all readable variables in the control program or simulation model to the client through the SSE. Therefore, the only configuration parameter required to customize this event is \textit{t}. See the example in section \ref{sec:connect} to get a view on the contents of the \textit{periodiclabdata} event.
+	\item \textit{Send-on-delta}. TODO.
+	\item \textit{TODO}.
+\end{enumerate}
+
 
 \begin{appendices}
 
 \chapter{Glossary}
+\textbf{Client implementation -} The final software implementation made on the client side to talk RIP.
+
 \textbf{Control program -} A software program which purpose is to control and monitor the hardware equipment used to in a laboratory activity.
 
 \textbf{Experience -} Any lab activity that can be performed in an OL.
@@ -1249,6 +1264,8 @@ After the process is finished, the communication protocol implementation configu
 \textbf{RIP -} Remote Interoperability Protocol.
 
 \textbf{RL -} Remote laboratory.
+
+\textbf{Server implementation -} The final software implementation made on the server side to talk RIP and communicate with the control programs or simulation models.
 
 \textbf{Simulation model -} A mathematical simulation that models a certain system with which laboratory activities can be carried out.
 
